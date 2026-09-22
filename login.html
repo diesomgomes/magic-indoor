@@ -125,26 +125,18 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 	<script>
 	async function initAuth() {
-		function readSetting(key, fallback) {
-			try { return localStorage.getItem(key) || fallback; } catch { return fallback; }
-		}
-
-		// A URL/chave publica vem do backend (backend/.env); um valor salvo em
-		// Configurações no navegador (localStorage) tem prioridade, para permitir
-		// apontar este painel para outro projeto Supabase sem mexer no servidor.
-		let SUPABASE_URL = readSetting('magicIndorSupabaseUrl', '');
-		let SUPABASE_ANON_KEY = readSetting('magicIndorSupabaseAnonKey', '');
-		if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-			try {
-				// Vazio = mesma origem da pagina (funciona local ou em producao).
-				const response = await fetch((window.MAGIC_INDOOR_API_BASE || '') + '/api/config');
-				if (response.ok) {
-					const config = await response.json();
-					SUPABASE_URL = SUPABASE_URL || config.supabaseUrl;
-					SUPABASE_ANON_KEY = SUPABASE_ANON_KEY || config.supabaseAnonKey;
-				}
-			} catch { /* backend fora do ar: segue em modo local */ }
-		}
+		// URL/chave publica vem sempre do backend (backend/.env) — mesma origem da pagina,
+		// entao funciona local ou em producao sem configuracao nenhuma no navegador.
+		let SUPABASE_URL = '';
+		let SUPABASE_ANON_KEY = '';
+		try {
+			const response = await fetch((window.MAGIC_INDOOR_API_BASE || '') + '/api/config');
+			if (response.ok) {
+				const config = await response.json();
+				SUPABASE_URL = config.supabaseUrl;
+				SUPABASE_ANON_KEY = config.supabaseAnonKey;
+			}
+		} catch { /* backend fora do ar */ }
 
 		const configured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 		const authClient = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -152,7 +144,7 @@
 		const setupNote = document.getElementById('setupNote');
 		setupNote.innerHTML = configured
 			? 'Conectado à sua base Supabase.'
-			: 'Integração com o Supabase ainda não configurada. <a href="/">Continuar em modo local</a> ou configure em Configurações → Integração Supabase.';
+			: 'Não foi possível conectar ao servidor. Tente novamente em instantes.';
 
 		let mode = 'signin';
 		const formTitle = document.getElementById('formTitle');

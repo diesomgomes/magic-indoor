@@ -258,14 +258,14 @@
 			</nav>
 			<div class="nav-label" style="margin-top: 32px">Conta</div>
 			<nav class="nav"><button data-view="settings" data-title="Configurações"><span class="nav-icon badge-navy">⚙</span><span>Configurações</span></button><button data-view="help" data-title="Central de ajuda"><span class="nav-icon badge-red">?</span><span>Central de ajuda</span></button></nav>
-			<div class="sidebar-bottom"><div class="account"><div class="avatar" id="accountAvatar">AM</div><div><b>Agência Mídia</b><small id="accountEmail">Plano profissional</small></div></div><button class="logout-btn" id="logoutBtn" hidden>Sair</button></div>
+			<div class="sidebar-bottom"><div class="account"><div class="avatar" id="accountAvatar">--</div><div><b id="accountName">Carregando…</b><small id="accountEmail"></small></div></div><button class="logout-btn" id="logoutBtn" hidden>Sair</button></div>
 		</aside>
 
 		<main class="main">
 			<header class="topbar"><div class="breadcrumb">Workspace / <strong id="breadcrumbTitle">Visão geral</strong></div><div class="top-actions"><button class="bell" aria-label="Notificações">♧</button><button class="help">Falar com suporte</button></div></header>
 
 			<section class="view active" id="view-overview">
-				<section class="intro"><div><h1>Bom dia, Amanda.</h1><p>Acompanhe o que está acontecendo na sua rede de mídia hoje.</p><div class="api-status" id="apiStatus">Conectando à API...</div></div></section>
+				<section class="intro"><div><h1 id="greeting">Bom dia!</h1><p>Acompanhe o que está acontecendo na sua rede de mídia hoje.</p><div class="api-status" id="apiStatus">Conectando à API...</div></div></section>
 
 				<section class="kpis">
 					<article class="kpi"><div class="kpi-label">Programações cadastradas</div><div class="kpi-number" id="kpiCampaigns">0</div><div class="kpi-note" id="kpiCampaignsNote">carregando...</div></article>
@@ -343,20 +343,10 @@
 
 				<article class="panel" style="margin-bottom:18px"><div class="settings-panel">
 					<div class="panel-title" style="margin-bottom:16px">Preferências do painel</div>
-					<div class="field"><label for="settingAgencyName">Nome da agência (exibido na barra lateral)</label><input id="settingAgencyName" placeholder="Ex.: Agência Mídia"></div>
 					<div class="field"><label for="settingPollInterval">Intervalo de atualização automática (segundos)</label><input id="settingPollInterval" type="number" min="3" max="120" value="5"><div class="settings-note">Com que frequência o painel busca novidades de dispositivos e programações.</div></div>
-					<div class="field"><label for="settingApiBase">Endereço da API</label><input id="settingApiBase" placeholder="http://localhost:3000"><div class="settings-note">Só troque se o backend estiver rodando em outro endereço. Salvar recarrega a página.</div></div>
+					<div class="field"><label for="settingApiBase">Endereço da API</label><input id="settingApiBase" placeholder="Deixe em branco para usar o mesmo endereço do painel"><div class="settings-note">Só troque se o backend estiver rodando em outro endereço. Salvar recarrega a página.</div></div>
 					<button class="primary" id="saveSettings">Salvar configurações</button>
 					<div class="save-note" id="settingsSaveNote">Configurações salvas.</div>
-				</div></article>
-
-				<article class="panel"><div class="settings-panel">
-					<div class="panel-title" style="margin-bottom:6px">Integração Supabase</div>
-					<p class="settings-note" style="margin-bottom:16px">Prepara as contas individuais: cada empresa entra com seu próprio login em <a href="/login" target="_blank">/login</a>. Por padrão o painel já usa o projeto configurado no servidor (<code>backend/.env</code>). Só preencha os campos abaixo se quiser apontar <strong>este navegador</strong> para outro projeto Supabase.</p>
-					<div class="field"><label for="settingSupabaseUrl">URL do projeto (opcional)</label><input id="settingSupabaseUrl" placeholder="Deixe em branco para usar a do servidor"></div>
-					<div class="field"><label for="settingSupabaseKey">Anon public key (opcional)</label><input id="settingSupabaseKey" placeholder="Deixe em branco para usar a do servidor"></div>
-					<button class="primary" id="saveSupabase">Salvar integração</button>
-					<div class="save-note" id="supabaseSaveNote">Integração salva. A tela de login já pode autenticar.</div>
 				</div></article>
 			</section>
 
@@ -389,6 +379,7 @@
 	</div>
 
 	<div class="modal-backdrop" id="linkModal"><div class="modal"><h2>Vincular dispositivo</h2><p>Digite o código exibido na tela do dispositivo e dê um nome para identificá-lo.</p><div class="field"><label for="linkDeviceName">Nome do dispositivo</label><input id="linkDeviceName" placeholder="Ex.: TV Recepção · 01"></div><div class="field"><label for="linkDeviceCode">Código do dispositivo</label><input id="linkDeviceCode" placeholder="MI-XXXXXX" style="text-transform:uppercase"></div><div class="file-error" id="linkError">Preencha o nome e um código válido (MI-XXXXXX).</div><div class="modal-actions"><button class="secondary" id="closeLinkModal">Cancelar</button><button class="primary" id="saveLinkDevice">Vincular</button></div></div></div>
+	<div class="modal-backdrop" id="onboardingModal"><div class="modal"><h2>Bem-vindo(a) ao Magic Indoor!</h2><p>Antes de continuar, conta pra gente seu nome e os dados da empresa — aparecem no painel e nos dispositivos.</p><div class="field"><label for="onboardingName">Seu nome</label><input id="onboardingName" placeholder="Ex.: Amanda Ribeiro"></div><div class="field"><label for="onboardingRazaoSocial">Nome da empresa / Razão social</label><input id="onboardingRazaoSocial" placeholder="Ex.: Magic Indoor Mídia Ltda."></div><div class="field"><label for="onboardingCnpj">CNPJ (opcional)</label><input id="onboardingCnpj" placeholder="00.000.000/0000-00"></div><div class="field"><label for="onboardingEndereco">Endereço (opcional)</label><input id="onboardingEndereco" placeholder="Rua, número, cidade — UF"></div><div class="file-error" id="onboardingError">Preencha seu nome e o nome da empresa.</div><div class="modal-actions"><button class="secondary" id="skipOnboarding">Preencher depois</button><button class="primary" id="saveOnboarding">Salvar e continuar</button></div></div></div>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 	<script>
 		function readSetting(key, fallback) {
@@ -1305,22 +1296,14 @@
 
 
 		// Configurações
-		const settingAgencyName = document.getElementById('settingAgencyName');
 		const settingPollInterval = document.getElementById('settingPollInterval');
 		const settingApiBase = document.getElementById('settingApiBase');
 		const settingsSaveNote = document.getElementById('settingsSaveNote');
-		const agencyNameEl = document.querySelector('.account b');
-
-		function applyAgencyName(name) {
-			if (name && agencyNameEl) agencyNameEl.textContent = name;
-		}
 
 		function loadSettingsForm() {
-			settingAgencyName.value = readSetting('magicIndorAgencyName', 'Agência Mídia');
 			settingPollInterval.value = String(POLL_MS / 1000);
 			settingApiBase.value = API_BASE;
 		}
-		applyAgencyName(readSetting('magicIndorAgencyName', ''));
 		loadSettingsForm();
 
 		document.getElementById('saveSettings').addEventListener('click', () => {
@@ -1328,12 +1311,11 @@
 				localStorage.setItem('magicIndorAgencyName', settingAgencyName.value.trim() || 'Agência Mídia');
 				const seconds = Math.min(120, Math.max(3, Number.parseInt(settingPollInterval.value, 10) || 5));
 				localStorage.setItem('magicIndorPollSeconds', String(seconds));
-				const newApiBase = settingApiBase.value.trim() || 'http://localhost:3000';
+				const newApiBase = settingApiBase.value.trim();
 				const apiBaseChanged = newApiBase !== API_BASE;
 				localStorage.setItem('magicIndorApiBase', newApiBase);
 				if (apiBaseChanged) { location.reload(); return; }
 				POLL_MS = seconds * 1000;
-				applyAgencyName(settingAgencyName.value.trim());
 				startPolling();
 				settingsSaveNote.classList.add('visible');
 				setTimeout(() => settingsSaveNote.classList.remove('visible'), 2500);
@@ -1372,42 +1354,85 @@
 				alert('Não foi possível salvar os dados da empresa.');
 			}
 		});
-		loadCompanySettings();
+		// Mostra o nome de verdade da pessoa logada (saudação + barra lateral), com um
+		// fallback razoável enquanto ela ainda não preencheu o nome no onboarding.
+		function updateAccountDisplay(user) {
+			const fullName = (user.user_metadata && user.user_metadata.full_name) || '';
+			const email = user.email || '';
+			const displayName = fullName || email.split('@')[0] || 'você';
+			const firstName = displayName.split(' ')[0];
+			document.getElementById('greeting').textContent = `Bom dia, ${firstName}.`;
+			document.getElementById('accountName').textContent = displayName;
+			document.getElementById('accountEmail').textContent = email;
+			document.getElementById('accountAvatar').textContent = displayName.slice(0, 2).toUpperCase();
+		}
 
-		// Integração Supabase (contas individuais) — guardada neste navegador por enquanto.
-		const supabaseNote = document.getElementById('supabaseSaveNote');
-		document.getElementById('settingSupabaseUrl').value = readSetting('magicIndorSupabaseUrl', '');
-		document.getElementById('settingSupabaseKey').value = readSetting('magicIndorSupabaseAnonKey', '');
-		document.getElementById('saveSupabase').addEventListener('click', () => {
+		// No primeiro login (ou enquanto o cadastro não estiver completo), pede o nome da
+		// pessoa e os dados da empresa antes de liberar o resto do painel.
+		async function maybeShowOnboarding() {
+			const fullName = (authClient && (await authClient.auth.getUser()).data.user.user_metadata.full_name) || '';
+			let company = { razao_social: '', cnpj: '', endereco: '' };
 			try {
-				localStorage.setItem('magicIndorSupabaseUrl', document.getElementById('settingSupabaseUrl').value.trim());
-				localStorage.setItem('magicIndorSupabaseAnonKey', document.getElementById('settingSupabaseKey').value.trim());
-				supabaseNote.classList.add('visible');
-				setTimeout(() => supabaseNote.classList.remove('visible'), 3000);
+				const response = await apiFetch(`${API_BASE}/api/company`);
+				if (response.ok) company = await response.json();
+			} catch { /* segue com os campos vazios */ }
+
+			if (fullName && company.razao_social) return;
+
+			document.getElementById('onboardingName').value = fullName;
+			document.getElementById('onboardingRazaoSocial').value = company.razao_social || '';
+			document.getElementById('onboardingCnpj').value = company.cnpj || '';
+			document.getElementById('onboardingEndereco').value = company.endereco || '';
+			document.getElementById('onboardingModal').classList.add('open');
+		}
+
+		const onboardingModal = document.getElementById('onboardingModal');
+		const onboardingError = document.getElementById('onboardingError');
+		document.getElementById('skipOnboarding').addEventListener('click', () => onboardingModal.classList.remove('open'));
+		document.getElementById('saveOnboarding').addEventListener('click', async () => {
+			const name = document.getElementById('onboardingName').value.trim();
+			const razaoSocial = document.getElementById('onboardingRazaoSocial').value.trim();
+			if (!name || !razaoSocial) { onboardingError.classList.add('visible'); return; }
+			onboardingError.classList.remove('visible');
+
+			try {
+				await authClient.auth.updateUser({ data: { full_name: name } });
+				await apiFetch(`${API_BASE}/api/company`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						razao_social: razaoSocial,
+						cnpj: document.getElementById('onboardingCnpj').value.trim(),
+						endereco: document.getElementById('onboardingEndereco').value.trim(),
+					}),
+				});
+				const { data } = await authClient.auth.getUser();
+				updateAccountDisplay(data.user);
+				document.getElementById('settingRazaoSocial').value = razaoSocial;
+				document.getElementById('settingCnpj').value = document.getElementById('onboardingCnpj').value.trim();
+				document.getElementById('settingEndereco').value = document.getElementById('onboardingEndereco').value.trim();
+				onboardingModal.classList.remove('open');
 			} catch {
-				alert('Não foi possível salvar a integração neste navegador.');
+				alert('Não foi possível salvar. Tenta de novo em alguns instantes.');
 			}
 		});
 
-		// Conta individual: o painel agora exige sessão Supabase para tudo (o backend recusa
-		// qualquer chamada de API sem token válido). A URL/chave vem do backend (backend/.env)
-		// por padrão; um valor salvo em Configurações (localStorage) tem prioridade, para
-		// apontar este painel a outro projeto Supabase.
+		// Conta individual: o painel exige sessão Supabase para tudo (o backend recusa
+		// qualquer chamada de API sem token válido). URL/chave sempre vêm do backend
+		// (backend/.env) — todo cliente do painel fala com o mesmo projeto Supabase.
 		// Retorna true se há sessão válida (e então preenche authClient/currentAccessToken
 		// para o apiFetch usar); caso contrário redireciona para /login e retorna false.
 		async function checkAuthGate() {
-			let supabaseUrl = readSetting('magicIndorSupabaseUrl', '');
-			let supabaseAnonKey = readSetting('magicIndorSupabaseAnonKey', '');
-			if (!supabaseUrl || !supabaseAnonKey) {
-				try {
-					const response = await fetch(`${API_BASE}/api/config`);
-					if (response.ok) {
-						const config = await response.json();
-						supabaseUrl = supabaseUrl || config.supabaseUrl;
-						supabaseAnonKey = supabaseAnonKey || config.supabaseAnonKey;
-					}
-				} catch { /* backend fora do ar */ }
-			}
+			let supabaseUrl = '';
+			let supabaseAnonKey = '';
+			try {
+				const response = await fetch(`${API_BASE}/api/config`);
+				if (response.ok) {
+					const config = await response.json();
+					supabaseUrl = config.supabaseUrl;
+					supabaseAnonKey = config.supabaseAnonKey;
+				}
+			} catch { /* backend fora do ar */ }
 			if (!supabaseUrl || !supabaseAnonKey || !window.supabase) {
 				window.location.href = '/login';
 				return false;
@@ -1423,9 +1448,7 @@
 				if (!session) window.location.href = '/login';
 			});
 
-			const email = data.session.user.email || '';
-			document.getElementById('accountEmail').textContent = email;
-			document.getElementById('accountAvatar').textContent = email.slice(0, 2).toUpperCase();
+			updateAccountDisplay(data.session.user);
 			const logoutBtn = document.getElementById('logoutBtn');
 			logoutBtn.hidden = false;
 			logoutBtn.addEventListener('click', async () => {
@@ -1441,6 +1464,8 @@
 			if (!authenticated) return;
 			refreshAll();
 			startPolling();
+			loadCompanySettings();
+			maybeShowOnboarding();
 		})();
 	</script>
 </body>

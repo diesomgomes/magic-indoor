@@ -180,6 +180,9 @@
 		.field input, .field select { border: 1px solid var(--line); padding: 11px; outline: none; font-size: 12px; background: var(--white); width: 100%; } .field input:focus, .field select:focus { border-color: var(--accent); }
 		.file-input { border: 1px dashed #a8c2ea; padding: 13px; background: #f4f8fe; width: 100%; }
 		.file-hint { color: var(--muted); font-size: 10px; margin-top: -3px; }
+		/* Altura fixa: o texto da orientacao vertical e bem mais longo que o da horizontal,
+		   sem isso o resto do editor pula de posicao ao trocar de horizontal <-> vertical. */
+		#orientationHint { min-height: 60px; line-height: 1.5; max-width: 260px; }
 		.media-preview { display: none; margin: 12px 0 0; background: var(--dark); min-height: 90px; max-height: 180px; overflow: hidden; align-items: center; justify-content: center; }
 		.media-preview.visible { display: flex; }
 		.media-preview img, .media-preview video { display: block; max-width: 100%; max-height: 180px; object-fit: contain; }

@@ -1237,7 +1237,7 @@
 
 		function isRecentlySeen(device) {
 			if (!device.last_seen_at) return false;
-			const seenAt = new Date(device.last_seen_at.replace(' ', 'T') + 'Z').getTime();
+			const seenAt = new Date(device.last_seen_at).getTime();
 			return Date.now() - seenAt < 30000;
 		}
 

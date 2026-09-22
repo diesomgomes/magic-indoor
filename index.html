@@ -239,6 +239,10 @@
 		.drop-line { height: 3px; background: var(--accent); margin: 0 14px; border-radius: 2px; pointer-events: none; }
 		.final-empty { padding: 44px 24px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.6; }
 		@media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } .pick-panel { height: 380px; } }
+		/* Some ate checkAuthGate() confirmar a sessao, pra nao "piscar" o dashboard antes
+		   do redirect para /login. gateReady adiciona esta classe so quando pode mostrar. */
+		.app { display: none; }
+		html.auth-ok .app { display: flex; }
 	</style>
 </head>
 <body>
@@ -1428,6 +1432,7 @@
 				await authClient.auth.signOut();
 				window.location.href = '/login';
 			});
+			document.documentElement.classList.add('auth-ok');
 			return true;
 		}
 

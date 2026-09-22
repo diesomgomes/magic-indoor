@@ -391,7 +391,10 @@
 			try { return localStorage.getItem(key) || fallback; } catch { return fallback; }
 		}
 
-		const API_BASE = readSetting('magicIndorApiBase', window.MAGIC_INDOOR_API_BASE || 'http://localhost:3000');
+		// Vazio = mesma origem da pagina (funciona em qualquer dominio, local ou producao,
+		// ja que o backend serve o painel e a API juntos). So sobrescreva isso se o painel
+		// estiver sendo aberto de um endereco diferente do backend.
+		const API_BASE = readSetting('magicIndorApiBase', window.MAGIC_INDOOR_API_BASE || '');
 		let POLL_MS = Number.parseInt(readSetting('magicIndorPollSeconds', '5'), 10) * 1000 || 5000;
 		let pollTimer = null;
 

@@ -136,7 +136,8 @@
 		let SUPABASE_ANON_KEY = readSetting('magicIndorSupabaseAnonKey', '');
 		if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 			try {
-				const response = await fetch((window.MAGIC_INDOOR_API_BASE || 'http://localhost:3000') + '/api/config');
+				// Vazio = mesma origem da pagina (funciona local ou em producao).
+				const response = await fetch((window.MAGIC_INDOOR_API_BASE || '') + '/api/config');
 				if (response.ok) {
 					const config = await response.json();
 					SUPABASE_URL = SUPABASE_URL || config.supabaseUrl;

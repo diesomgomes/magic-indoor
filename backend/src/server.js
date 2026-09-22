@@ -49,6 +49,17 @@ app.get('/downloads/magic-indoor-player.apk', (_req, res) => {
   });
 });
 
+// Instalador do player para Windows (mesmo player, versao desktop em Electron).
+app.get('/downloads/magic-indoor-player-setup.exe', (_req, res) => {
+  const dir = path.join(__dirname, '..', '..', 'desktop-player', 'dist-installer');
+  let files = [];
+  try { files = require('fs').readdirSync(dir).filter((f) => f.endsWith('.exe')); } catch { /* pasta ainda nao existe */ }
+  if (!files.length) return res.status(404).json({ error: 'Instalador ainda nao foi gerado neste servidor.' });
+  res.download(path.join(dir, files[0]), 'magic-indoor-player-setup.exe', (err) => {
+    if (err && !res.headersSent) res.status(404).json({ error: 'Instalador ainda nao foi gerado neste servidor.' });
+  });
+});
+
 // Varre os dispositivos aprovados de TODAS as contas e registra eventos quando um fica
 // online/offline, com base no ultimo contato (last_seen_at) reportado pelo APK. E uma
 // tarefa de sistema cross-tenant, por isso usa o cliente admin (ignora RLS).

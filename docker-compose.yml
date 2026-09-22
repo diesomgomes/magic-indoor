@@ -26,6 +26,9 @@ services:
       # app/, e nao ha SDK/Gradle no build). Manda o .apk pra este caminho na VPS
       # (scp) e o botao "Baixar APK" do painel ja serve direto daqui.
       - ./app/build/outputs/apk/debug:/app/app/build/outputs/apk/debug
+      # Mesma logica pro instalador do player Windows (nao entra na imagem, nao ha
+      # Electron/NSIS no build). Manda o .exe pra cá via scp.
+      - ./desktop-player/dist-installer:/app/desktop-player/dist-installer
     networks:
       - default
       - proxy

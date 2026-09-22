@@ -1,0 +1,11 @@
+.git
+node_modules
+backend/node_modules
+backend/uploads
+backend/data
+backend/.env
+app
+build
+*.md
+.gradle
+.gradle-local

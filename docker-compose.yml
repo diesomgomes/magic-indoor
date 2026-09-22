@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: magicindor-backend
+    restart: unless-stopped
+    ports:
+      # so em loopback: o nginx do host e quem fala com a internet (ver DEPLOY.md)
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - backend/.env
+    volumes:
+      # bind mount para os uploads sobreviverem a rebuilds/restarts do container
+      # e ficarem faceis de fazer backup direto no host
+      - ./backend/uploads:/app/backend/uploads

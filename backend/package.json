@@ -1,0 +1,17 @@
+{
+  "name": "magicindor-backend",
+  "version": "0.1.0",
+  "description": "Backend minimo do MAGICINDOR: dispositivos, campanhas e sincronizacao",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "cors": "^2.8.5",
+    "dotenv": "^18.0.2",
+    "express": "^4.21.0",
+    "multer": "^2.0.1"
+  }
+}

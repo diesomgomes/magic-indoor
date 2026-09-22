@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Magic Indoor | Mídia indoor inteligente</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+		:root {
+			--ink: #101a2c;
+			--muted: #64758c;
+			--line: #d9e3f5;
+			--paper: #f1f5fc;
+			--white: #ffffff;
+			--accent: #2f6fed;
+			--accent-deep: #1d4ed8;
+			--accent-warm: #6ec6ff;
+			--accent-soft: #bfe3ff;
+			--dark: #0d1b2a;
+			--shadow: 0 18px 50px rgba(13, 27, 42, .1);
+		}
+
+		* { box-sizing: border-box; }
+		html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: 'Manrope', sans-serif; overflow: hidden; }
+		button, input { font: inherit; }
+		button { cursor: pointer; }
+		.app { display: flex; height: 100vh; }
+
+		.sidebar { width: 238px; flex-shrink: 0; height: 100vh; overflow-y: auto; background: var(--dark); color: #e7f0fb; display: flex; flex-direction: column; padding: 27px 16px 20px; }
+		.brand { display: flex; gap: 11px; align-items: center; padding: 0 11px 42px; font-weight: 800; letter-spacing: -.04em; font-size: 17px; }
+		.brand-mark { width: 32px; height: 32px; display: grid; place-items: center; }
+		.brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+		.brand-mark-fallback { width: 30px; height: 30px; background: var(--accent); color: var(--dark); display: grid; place-items: center; font-weight: 800; border-radius: 6px; }
+		.nav-label { color: #7d93b3; font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: .13em; text-transform: uppercase; padding: 0 12px 10px; }
+		.nav { display: grid; gap: 5px; }
+		.nav button { border: 0; background: transparent; color: #9aacc7; text-align: left; padding: 8px 12px; border-radius: 5px; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 13px; }
+		.nav button:hover, .nav button.active { background: #1a3352; color: #eef4ff; }
+		.nav-icon { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font-size: 14px; color: #fff; }
+		.nav-icon.badge-blue { background: #4a90d9; }
+		.nav-icon.badge-teal { background: #3aa9a0; }
+		.nav-icon.badge-orange { background: #e8935c; }
+		.nav-icon.badge-purple { background: #6c63a6; }
+		.nav-icon.badge-navy { background: #35507a; }
+		.nav-icon.badge-red { background: #d9645c; }
+		.nav-icon.badge-yellow { background: #e0b345; }
+		.sidebar-bottom { margin-top: auto; border-top: 1px solid #23405f; padding: 18px 11px 0; }
+		.logout-btn { width: 100%; margin-top: 12px; border: 1px solid #2c4870; background: transparent; color: #9aacc7; font-size: 11px; font-weight: 700; padding: 9px; border-radius: 5px; }
+		.logout-btn:hover { border-color: var(--accent); color: #eef4ff; }
+		.account { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+		.avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #d3e4fb; color: #1d3a63; font-weight: 800; }
+		.account small { display: block; color: #86a0c4; font-size: 10px; margin-top: 2px; }
+
+		.main { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; padding: 27px 37px 44px; }
+		.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 34px; }
+		.breadcrumb { color: var(--muted); font-size: 12px; }
+		.breadcrumb strong { color: var(--ink); font-weight: 700; }
+		.top-actions { display: flex; align-items: center; gap: 20px; }
+		.bell { border: 0; background: none; color: var(--muted); font-size: 18px; position: relative; }
+		.bell::after { content: ''; position: absolute; width: 5px; height: 5px; background: var(--accent-warm); border-radius: 50%; top: 0; right: 0; }
+		.help { border: 1px solid var(--line); background: var(--white); color: var(--ink); padding: 9px 14px; font-size: 12px; font-weight: 700; border-radius: 4px; }
+		.intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 27px; }
+		h1 { font-size: clamp(26px, 3vw, 38px); line-height: 1; letter-spacing: -.065em; margin: 0 0 11px; }
+		.intro p { color: var(--muted); margin: 0; font-size: 13px; }
+		.primary { background: var(--accent); color: var(--white); border: 0; border-radius: 4px; padding: 12px 17px; font-weight: 800; font-size: 12px; box-shadow: 0 5px 0 var(--accent-deep); transition: transform .15s, box-shadow .15s; }
+		.primary:hover { transform: translateY(2px); box-shadow: 0 3px 0 var(--accent-deep); }
+		.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+		.kpi { background: var(--white); padding: 17px 19px; min-height: 112px; border: 1px solid var(--line); position: relative; overflow: hidden; }
+		.kpi::after { content: ''; width: 55px; height: 55px; background: var(--accent); position: absolute; border-radius: 50%; right: -17px; bottom: -25px; opacity: .3; }
+		.kpi:nth-child(2)::after { background: var(--accent-warm); }
+		.kpi:nth-child(3)::after { background: var(--accent-soft); }
+		.kpi:nth-child(4)::after { background: var(--accent-deep); }
+		.kpi-label { color: var(--muted); font-size: 11px; font-weight: 700; }
+		.kpi-number { font-size: 29px; font-weight: 800; letter-spacing: -.06em; margin: 9px 0 3px; }
+		.kpi-note { font-size: 10px; color: var(--muted); }
+		.up { color: var(--accent-deep); font-weight: 700; }
+
+		.grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, .9fr); gap: 18px; }
+		.panel { background: var(--white); border: 1px solid var(--line); box-shadow: var(--shadow); }
+		.panel-head { display: flex; justify-content: space-between; align-items: center; padding: 19px 21px 16px; border-bottom: 1px solid var(--line); }
+		.panel-title { font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+		.panel-meta { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+		.view-link { color: var(--accent-deep); font-size: 11px; font-weight: 800; border: 0; background: none; display: inline-flex; align-items: center; gap: 6px; }
+		.view-link .btn-spinner { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(29,78,216,.25); border-top-color: var(--accent-deep); animation: btn-spin .7s linear infinite; display: none; }
+		.view-link.loading .btn-spinner { display: inline-block; }
+		.view-link.loading { pointer-events: none; opacity: .75; }
+		@keyframes btn-spin { to { transform: rotate(360deg); } }
+		.schedule-item { display: flex; flex-wrap: wrap; gap: 10px 13px; align-items: center; padding: 14px 21px; border-bottom: 1px solid #eaf0fa; }
+		.schedule-item:last-child { border-bottom: 0; }
+		.item-main { display: flex; gap: 13px; align-items: center; flex: 1 1 220px; min-width: 0; }
+		.thumb { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; color: #fff; flex-shrink: 0; }
+		.thumb.green { background: #4a90d9; } .thumb.coral { background: #e8935c; } .thumb.blue { background: #3aa9a0; } .thumb.yellow { background: #e0b345; }
+		.item-name { font-weight: 800; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.item-name-input { font-weight: 800; font-size: 12px; border: 1px solid var(--accent); border-radius: 3px; padding: 3px 5px; width: 100%; }
+		.item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+		.icon-btn { border: 1px solid var(--line); background: var(--white); font-size: 11px; padding: 5px 7px; border-radius: 3px; line-height: 1; color: var(--muted); }
+		.icon-btn:hover { border-color: var(--accent); color: var(--accent-deep); }
+		.icon-btn.danger:hover { border-color: #f1c2c2; color: #c4483f; }
+		.device-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+		.device-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 3px 4px 3px 10px; font: 9px 'DM Mono', monospace; color: var(--ink); }
+		.device-chip button { border: 0; background: #dbe6f7; color: var(--accent-deep); width: 15px; height: 15px; border-radius: 50%; font-size: 10px; line-height: 1; display: grid; place-items: center; }
+		.expand-btn { border: 0; background: none; color: var(--muted); font-size: 12px; width: 20px; flex-shrink: 0; cursor: pointer; transition: transform .15s; }
+		.expand-btn.open { transform: rotate(90deg); }
+		.item-count-badge { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--accent-deep); background: var(--accent-soft); border-radius: 10px; padding: 1px 7px; margin-left: 6px; }
+		.sub-items { flex-basis: 100%; display: none; margin-top: 8px; padding: 12px 0 4px 47px; border-top: 1px dashed var(--line); gap: 8px; flex-direction: column; }
+		.sub-items.open { display: flex; }
+		.sub-item { display: flex; align-items: center; gap: 10px; font-size: 11px; }
+		.sub-item .thumb { width: 26px; height: 26px; font-size: 11px; }
+		.sub-item-info { flex: 1 1 auto; min-width: 0; }
+		.sub-item-sub { color: var(--muted); font-size: 9px; margin-top: 2px; }
+		.sub-input { border: 1px solid var(--line); padding: 5px 6px; font-size: 10px; width: 64px; }
+		.sub-select { border: 1px solid var(--line); padding: 5px 6px; font-size: 10px; }
+		.add-files-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+		[hidden] { display: none !important; }
+		.item-sub { color: var(--muted); font-size: 10px; margin-top: 3px; }
+		.small-data { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+		.status { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; }
+		.status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #3aa76d; }
+		.status.paused::before { background: #f0ab3d; }
+		.empty { display: none; padding: 31px; color: var(--muted); font-size: 12px; text-align: center; }
+		.assign-select { border: 1px solid var(--line); background: var(--white); font-size: 10px; padding: 6px 7px; max-width: 150px; }
+
+		.device-list { padding: 4px 21px 9px; }
+		.device { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eaf0fa; gap: 10px; }
+		.device:last-child { border-bottom: 0; }
+		.device-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+		.device-icon { width: 32px; height: 32px; border-radius: 50%; background: #4a90d9; display: grid; place-items: center; font-size: 13px; color: #fff; flex-shrink: 0; }
+		.device-name { font-weight: 800; font-size: 11px; }
+		.device-place { color: var(--muted); font-size: 10px; margin-top: 4px; font-family: 'DM Mono', monospace; }
+		.device-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+		.online { color: #2f8a5c; font-family: 'DM Mono', monospace; font-size: 9px; white-space: nowrap; }
+		.online::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #3aa76d; margin-right: 4px; }
+		.offline { color: #c98a2e; } .offline::before { background: #f0ab3d; }
+		.pending { color: var(--muted); } .pending::before { background: #b7c3d9; }
+		.device-actions { display: flex; gap: 5px; }
+		.mini-btn { border: 1px solid var(--line); background: var(--white); font-size: 9px; font-weight: 800; padding: 5px 7px; border-radius: 3px; }
+		.mini-btn.approve { border-color: var(--accent); color: var(--accent-deep); }
+		.mini-btn.reject { border-color: #f1c2c2; color: #c4483f; }
+		.api-status { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted); margin-top: 4px; }
+		.api-status.online { color: #2f8a5c; } .api-status.offline { color: #c4483f; }
+
+		.view { display: none; }
+		.view.active { display: block; }
+
+		.event-item { display: flex; gap: 11px; padding: 11px 21px; border-bottom: 1px solid #eaf0fa; align-items: flex-start; }
+		.event-item:last-child { border-bottom: 0; }
+		.event-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; background: var(--accent); }
+		.event-dot.type-device_online, .event-dot.type-campaign_created, .event-dot.type-device_linked, .event-dot.type-device_registered { background: #3aa76d; }
+		.event-dot.type-device_offline { background: #f0ab3d; }
+		.event-dot.type-device_deleted, .event-dot.type-campaign_deleted { background: #d9645c; }
+		.event-dot.type-campaign_assigned { background: #6c63a6; }
+		.event-text { font-size: 11px; font-weight: 700; line-height: 1.4; }
+		.event-time { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 3px; }
+
+		.help-panel { padding: 19px 21px; }
+		.help-item { margin-bottom: 18px; }
+		.help-item:last-child { margin-bottom: 0; }
+		.help-item summary { font-weight: 800; font-size: 13px; cursor: pointer; padding: 4px 0; }
+		.help-item p { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 8px 0 0; }
+		.help-item code { background: var(--paper); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 11px; }
+
+		.settings-panel { padding: 21px; max-width: 480px; }
+		.settings-note { font-size: 10px; color: var(--muted); margin-top: -3px; }
+		.save-note { font-size: 11px; color: #2f8a5c; margin-top: 12px; display: none; }
+		.save-note.visible { display: block; }
+
+		.bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+		.schedule { padding: 19px 21px; }
+		.schedule-line { display: flex; gap: 15px; align-items: center; padding: 10px 0; border-bottom: 1px solid #eaf0fa; }
+		.schedule-line:last-child { border: 0; }
+		.schedule-time { width: 38px; color: var(--muted); font: 10px 'DM Mono', monospace; }
+		.schedule-bar { width: 3px; height: 25px; background: var(--accent); } .schedule-line:nth-child(3) .schedule-bar { background: var(--accent-warm); }
+		.schedule-title { font-size: 11px; font-weight: 800; } .schedule-desc { color: var(--muted); font-size: 10px; margin-top: 3px; }
+
+		.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(20, 33, 31, .56); z-index: 5; place-items: center; padding: 20px; }
+		.modal-backdrop.open { display: grid; }
+		.modal { background: var(--white); width: min(450px, 100%); padding: 25px; box-shadow: 0 20px 70px rgba(0,0,0,.2); }
+		.modal h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.05em; } .modal p { color: var(--muted); font-size: 12px; margin: 0 0 23px; }
+		.field { display: grid; gap: 7px; margin-bottom: 15px; } .field label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+		.field input, .field select { border: 1px solid var(--line); padding: 11px; outline: none; font-size: 12px; background: var(--white); width: 100%; } .field input:focus, .field select:focus { border-color: var(--accent); }
+		.file-input { border: 1px dashed #a8c2ea; padding: 13px; background: #f4f8fe; width: 100%; }
+		.file-hint { color: var(--muted); font-size: 10px; margin-top: -3px; }
+		.media-preview { display: none; margin: 12px 0 0; background: var(--dark); min-height: 90px; max-height: 180px; overflow: hidden; align-items: center; justify-content: center; }
+		.media-preview.visible { display: flex; }
+		.media-preview img, .media-preview video { display: block; max-width: 100%; max-height: 180px; object-fit: contain; }
+		.file-error { display: none; color: #c4483f; font-size: 10px; margin-top: 7px; }
+		.file-error.visible { display: block; }
+		.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; } .secondary { border: 1px solid var(--line); background: white; padding: 11px 14px; font-size: 11px; font-weight: 700; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; border-radius: 4px; }
+
+		@media (max-width: 980px) { .sidebar { width: 72px; padding-inline: 10px; } .brand { padding-inline: 11px; } .brand span:not(.brand-mark) { display: none; } .nav-label, .nav button span:not(.nav-icon), .account > div { display: none; } .nav button { justify-content: center; } .sidebar-bottom { padding-inline: 10px; } .account { justify-content: center; } .main { padding-inline: 24px; } }
+		@media (max-width: 730px) { .main { padding: 20px 15px 35px; } .topbar { margin-bottom: 25px; } .help { display: none; } .intro { align-items: flex-start; flex-direction: column; } .kpis { grid-template-columns: 1fr 1fr; } .grid, .bottom-row { grid-template-columns: 1fr; } .schedule-item { grid-template-columns: 38px minmax(110px, 1fr) 74px; } .schedule-item > :nth-child(3), .schedule-item > :nth-child(4) { display: none; } }
+
+		.drop-zone { border: 2px dashed #a8c2ea; background: #f4f8fe; border-radius: 8px; padding: 26px; text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; margin-bottom: 12px; transition: background .15s, border-color .15s; line-height: 1.7; }
+		.drop-zone small { font-size: 10px; }
+		.drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: #eaf2ff; color: var(--accent-deep); }
+		.status-note { font-size: 11px; color: #2f8a5c; min-height: 18px; margin-bottom: 8px; }
+		.status-note.error { color: #c4483f; }
+		.filter-row { display: flex; gap: 12px; align-items: center; padding: 14px 21px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+		.chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+		.chip-tab { border: 1px solid var(--line); background: var(--white); font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 20px; color: var(--muted); }
+		.chip-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+		.search-input { border: 1px solid var(--line); padding: 9px 11px; font-size: 12px; outline: none; flex: 1 1 180px; min-width: 0; width: 100%; background: var(--white); }
+		.search-input:focus { border-color: var(--accent); }
+		.file-row { display: flex; align-items: center; gap: 14px; padding: 12px 21px; border-bottom: 1px solid #eaf0fa; }
+		.file-row:last-child { border-bottom: 0; }
+		.file-thumb { width: 64px; height: 40px; border-radius: 4px; background: #0d1b2a; overflow: hidden; flex-shrink: 0; display: block; }
+		.file-thumb img, .file-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.file-meta { flex: 1; min-width: 0; }
+		.type-badge { font: 9px 'DM Mono', monospace; background: var(--accent-soft); color: var(--accent-deep); border-radius: 10px; padding: 1px 7px; }
+
+		.editor-actions { display: flex; gap: 10px; }
+		.editor-top { display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 8px; }
+		.editor-name { flex: 1 1 320px; max-width: 460px; margin-bottom: 0; }
+		.seg { display: inline-flex; justify-self: start;border: 1px solid var(--line); border-radius: 5px; overflow: hidden; background: var(--white); }
+		.seg-btn { border: 0; background: transparent; padding: 11px 16px; font-size: 12px; font-weight: 700; color: var(--muted); }
+		.seg-btn + .seg-btn { border-left: 1px solid var(--line); }
+		.seg-btn.active { background: var(--accent); color: #fff; }
+		.editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 10px; }
+		.pick-panel { background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--accent); box-shadow: var(--shadow); display: flex; flex-direction: column; height: calc(100vh - 300px); min-height: 360px; }
+		.final-panel { border-top-color: #3aa76d; }
+		.tabs { display: flex; gap: 6px; padding: 12px 14px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+		.tab { border: 1px solid var(--line); border-bottom: 0; background: var(--paper); padding: 9px 14px; font-size: 12px; font-weight: 700; color: var(--muted); border-radius: 5px 5px 0 0; margin-bottom: -1px; }
+		.tab.active { background: var(--white); color: var(--ink); border-top: 3px solid var(--accent); padding-top: 7px; }
+		.pick-search { padding: 12px 14px; background: #eef3fa; }
+		.pick-list, .final-list { overflow-y: auto; flex: 1; min-height: 0; }
+		.pick-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #eaf0fa; cursor: grab; }
+		.pick-item:hover { background: #f6f9fe; }
+		.pick-item .add-btn { margin-left: auto; flex-shrink: 0; }
+		.tool-icon { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-size: 18px; flex-shrink: 0; }
+		.final-head { display: flex; justify-content: space-between; align-items: center; padding: 15px 14px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; background: #e3f3e8; }
+		.final-list.over { background: #f3f9ff; }
+		.final-item { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #eaf0fa; background: var(--white); }
+		.final-item.dragging { opacity: .35; }
+		.final-item .title { flex: 1 1 120px; min-width: 0; font-weight: 700; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.final-item .url-input { flex: 1 1 100%; border: 1px solid var(--line); padding: 8px 10px; font-size: 11px; outline: none; margin-left: 46px; }
+		.final-item .url-input:focus { border-color: var(--accent); }
+		.final-item .order-num { width: 16px; text-align: right; margin: 0; }
+		.drag-handle { cursor: grab; color: var(--muted); font-size: 16px; user-select: none; letter-spacing: -3px; }
+		.drop-line { height: 3px; background: var(--accent); margin: 0 14px; border-radius: 2px; pointer-events: none; }
+		.final-empty { padding: 44px 24px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.6; }
+		@media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } .pick-panel { height: 380px; } }
+	</style>
+</head>
+<body>
+	<div class="app">
+		<aside class="sidebar">
+			<div class="brand"><div class="brand-mark"><img src="assets/logo.png" alt="Magic Indoor" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'brand-mark-fallback',textContent:'MI'}))"></div><span>Magic Indoor</span></div>
+			<div class="nav-label">Workspace</div>
+			<nav class="nav">
+				<button class="active" data-view="overview" data-title="Visão geral"><span class="nav-icon badge-blue">▦</span><span>Visão geral</span></button>
+				<button data-view="devices" data-title="Dispositivos"><span class="nav-icon badge-teal">▤</span><span>Dispositivos</span></button>
+				<button data-view="files" data-title="Arquivos"><span class="nav-icon badge-yellow">▣</span><span>Arquivos</span></button>
+				<button data-view="schedule" data-title="Programação"><span class="nav-icon badge-orange">◷</span><span>Programação</span></button>
+			</nav>
+			<div class="nav-label" style="margin-top: 32px">Conta</div>
+			<nav class="nav"><button data-view="settings" data-title="Configurações"><span class="nav-icon badge-navy">⚙</span><span>Configurações</span></button><button data-view="help" data-title="Central de ajuda"><span class="nav-icon badge-red">?</span><span>Central de ajuda</span></button></nav>
+			<div class="sidebar-bottom"><div class="account"><div class="avatar" id="accountAvatar">AM</div><div><b>Agência Mídia</b><small id="accountEmail">Plano profissional</small></div></div><button class="logout-btn" id="logoutBtn" hidden>Sair</button></div>
+		</aside>
+
+		<main class="main">
+			<header class="topbar"><div class="breadcrumb">Workspace / <strong id="breadcrumbTitle">Visão geral</strong></div><div class="top-actions"><button class="bell" aria-label="Notificações">♧</button><button class="help">Falar com suporte</button></div></header>
+
+			<section class="view active" id="view-overview">
+				<section class="intro"><div><h1>Bom dia, Amanda.</h1><p>Acompanhe o que está acontecendo na sua rede de mídia hoje.</p><div class="api-status" id="apiStatus">Conectando à API...</div></div></section>
+
+				<section class="kpis">
+					<article class="kpi"><div class="kpi-label">Programações cadastradas</div><div class="kpi-number" id="kpiCampaigns">0</div><div class="kpi-note" id="kpiCampaignsNote">carregando...</div></article>
+					<article class="kpi"><div class="kpi-label">Dispositivos online</div><div class="kpi-number" id="kpiDevicesOnline">0 <small style="font-size:14px;color:var(--muted);font-weight:500">/ 0</small></div><div class="kpi-note" id="kpiDevicesNote">carregando...</div></article>
+					<article class="kpi"><div class="kpi-label">Desativados</div><div class="kpi-number" id="kpiPending">0</div><div class="kpi-note">dispositivos fora do ar por escolha</div></article>
+					<article class="kpi"><div class="kpi-label">Vínculos ativos</div><div class="kpi-number" id="kpiAssigned">0</div><div class="kpi-note">programações com dispositivo vinculado</div></article>
+				</section>
+
+				<section class="bottom-row">
+					<article class="panel">
+						<div class="panel-head"><div><div class="panel-title">Últimas programações</div><div class="panel-meta">5 mais recentes</div></div><button class="view-link" data-goto="schedule">Ver todas →</button></div>
+						<div id="overviewCampaigns"></div><div class="empty" id="emptyOverviewCampaigns">Nenhuma programação cadastrada ainda.</div>
+					</article>
+					<article class="panel">
+						<div class="panel-head"><div><div class="panel-title">Atividade da rede</div><div class="panel-meta">Eventos recentes</div></div></div>
+						<div id="overviewEvents"></div><div class="empty" id="emptyOverviewEvents">Nenhuma atividade registrada ainda.</div>
+					</article>
+				</section>
+			</section>
+
+			<section class="view" id="view-devices">
+				<section class="intro"><div><h1>Dispositivos</h1><p>Adicione um dispositivo digitando o código exibido na tela dele.</p></div><div style="display:flex;gap:10px"><a class="secondary" id="downloadApk" href="/downloads/magic-indoor-player.apk" download>⬇ Baixar APK</a><button class="primary" id="linkDevice">+ Vincular dispositivo</button></div></section>
+				<article class="panel"><div class="panel-head"><div><div class="panel-title">Minha rede</div><div class="panel-meta" id="devicesMeta">carregando...</div></div><button class="view-link" id="refreshDevices"><span class="btn-spinner"></span>Atualizar →</button></div>
+					<div class="device-list" id="devices"></div><div class="empty" id="emptyDevices">Nenhum dispositivo registrado ainda. Abra o app Magic Indoor Player em um Android para que ele apareça aqui — o código exibido na tela dele deve aparecer nesta lista.</div>
+				</article>
+			</section>
+
+			<section class="view" id="view-files">
+				<section class="intro"><div><h1>Arquivos</h1><p>Sua biblioteca de imagens, vídeos e GIFs. Depois é só usar nas programações.</p></div><button class="primary" id="uploadFilesBtn">+ Enviar arquivos</button></section>
+				<div class="drop-zone" id="dropZone">Arraste arquivos aqui ou clique para selecionar<br><small>JPG, PNG, GIF, MP4, WebM e Ogg · até 200 MB por arquivo</small></div>
+				<input type="file" id="filesInput" multiple hidden accept="image/jpeg,image/png,image/gif,video/mp4,video/webm,video/ogg">
+				<div class="status-note" id="filesStatus"></div>
+				<article class="panel"><div class="panel-head"><div><div class="panel-title">Biblioteca</div><div class="panel-meta" id="filesMeta">carregando...</div></div></div>
+					<div class="filter-row"><div id="filesFilters" class="chip-row"></div><input class="search-input" id="filesSearch" placeholder="Procurar arquivo"></div>
+					<div id="filesList"></div><div class="empty" id="emptyFiles"></div>
+				</article>
+			</section>
+
+			<section class="view" id="view-schedule">
+				<div id="scheduleList">
+					<section class="intro"><div><h1>Programação</h1><p>Monte a ordem de exibição com arquivos, notícias e dashboards e direcione para o dispositivo certo.</p></div><button class="primary" id="newCampaign">+ Nova programação</button></section>
+					<article class="panel"><div class="panel-head"><div><div class="panel-title">Programações cadastradas</div><div class="panel-meta" id="campaignsMeta">carregando...</div></div><button class="view-link" id="refreshCampaigns"><span class="btn-spinner"></span>Atualizar →</button></div>
+						<div id="campaigns"></div><div class="empty" id="emptyCampaigns">Nenhuma programação cadastrada ainda.</div>
+					</article>
+				</div>
+				<div id="scheduleEditor" hidden>
+					<section class="intro"><div><h1 id="editorTitle">Nova programação</h1><p>Arraste os itens da esquerda para a lista final para definir a ordem de exibição nas TVs.</p></div><div class="editor-actions"><button class="secondary" id="editorCancel">Cancelar</button><button class="primary" id="editorSave">Salvar programação</button></div></section>
+					<div class="editor-top"><div class="field editor-name"><label for="editorName">Nome da programação</label><input id="editorName" placeholder="Ex.: Semana do Cliente" maxlength="120"></div><div class="field"><label>Orientação da exibição</label><div class="seg" id="orientationSeg"><button type="button" class="seg-btn active" data-value="horizontal">▭ Horizontal</button><button type="button" class="seg-btn" data-value="vertical">▯ Vertical</button></div><div class="file-hint" id="orientationHint"></div></div></div>
+					<div class="file-error" id="editorError"></div>
+					<div class="editor-grid">
+						<article class="pick-panel">
+							<div class="tabs" id="editorTabs"></div>
+							<div class="pick-search"><input class="search-input" id="pickSearch" placeholder="Procurar arquivo"></div>
+							<div class="pick-list" id="pickList"></div>
+						</article>
+						<article class="pick-panel final-panel">
+							<div class="final-head"><span>Lista final que será exibida nas TVs</span><span class="panel-meta" id="finalMeta">0 itens</span></div>
+							<div class="final-list" id="finalList"></div>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<section class="view" id="view-settings">
+				<section class="intro"><div><h1>Configurações</h1><p>Preferências do painel e dados cadastrais da empresa.</p></div></section>
+
+				<article class="panel" style="margin-bottom:18px"><div class="settings-panel">
+					<div class="panel-title" style="margin-bottom:16px">Dados da empresa</div>
+					<div class="field"><label for="settingRazaoSocial">Razão social</label><input id="settingRazaoSocial" placeholder="Ex.: Magic Indoor Mídia Ltda."></div>
+					<div class="field"><label for="settingCnpj">CNPJ</label><input id="settingCnpj" placeholder="00.000.000/0000-00"></div>
+					<div class="field"><label for="settingEndereco">Endereço</label><input id="settingEndereco" placeholder="Rua, número, cidade — UF"></div>
+					<button class="primary" id="saveCompany">Salvar dados da empresa</button>
+					<div class="save-note" id="companySaveNote">Dados da empresa salvos.</div>
+				</div></article>
+
+				<article class="panel" style="margin-bottom:18px"><div class="settings-panel">
+					<div class="panel-title" style="margin-bottom:16px">Preferências do painel</div>
+					<div class="field"><label for="settingAgencyName">Nome da agência (exibido na barra lateral)</label><input id="settingAgencyName" placeholder="Ex.: Agência Mídia"></div>
+					<div class="field"><label for="settingPollInterval">Intervalo de atualização automática (segundos)</label><input id="settingPollInterval" type="number" min="3" max="120" value="5"><div class="settings-note">Com que frequência o painel busca novidades de dispositivos e programações.</div></div>
+					<div class="field"><label for="settingApiBase">Endereço da API</label><input id="settingApiBase" placeholder="http://localhost:3000"><div class="settings-note">Só troque se o backend estiver rodando em outro endereço. Salvar recarrega a página.</div></div>
+					<button class="primary" id="saveSettings">Salvar configurações</button>
+					<div class="save-note" id="settingsSaveNote">Configurações salvas.</div>
+				</div></article>
+
+				<article class="panel"><div class="settings-panel">
+					<div class="panel-title" style="margin-bottom:6px">Integração Supabase</div>
+					<p class="settings-note" style="margin-bottom:16px">Prepara as contas individuais: cada empresa entra com seu próprio login em <a href="/login" target="_blank">/login</a>. Por padrão o painel já usa o projeto configurado no servidor (<code>backend/.env</code>). Só preencha os campos abaixo se quiser apontar <strong>este navegador</strong> para outro projeto Supabase.</p>
+					<div class="field"><label for="settingSupabaseUrl">URL do projeto (opcional)</label><input id="settingSupabaseUrl" placeholder="Deixe em branco para usar a do servidor"></div>
+					<div class="field"><label for="settingSupabaseKey">Anon public key (opcional)</label><input id="settingSupabaseKey" placeholder="Deixe em branco para usar a do servidor"></div>
+					<button class="primary" id="saveSupabase">Salvar integração</button>
+					<div class="save-note" id="supabaseSaveNote">Integração salva. A tela de login já pode autenticar.</div>
+				</div></article>
+			</section>
+
+			<section class="view" id="view-help">
+				<section class="intro"><div><h1>Central de ajuda</h1><p>Respostas rápidas para as dúvidas mais comuns sobre o Magic Indoor.</p></div></section>
+				<article class="panel"><div class="help-panel">
+					<details class="help-item" open>
+						<summary>Como vincular um novo dispositivo?</summary>
+						<p>Abra o app Magic Indoor Player no aparelho Android — ele mostra um código no formato <code>MI-XXXXXX</code> na tela de espera. No painel, vá em <strong>Dispositivos → Vincular dispositivo</strong>, dê um nome e digite esse código.</p>
+					</details>
+					<details class="help-item">
+						<summary>Como cadastrar e enviar uma programação?</summary>
+						<p>Vá em <strong>Programação → Nova programação</strong>, escolha um nome, a duração (para imagem/GIF) e o arquivo. Depois, na lista, use o seletor <strong>"Enviar para..."</strong> para vincular a programação a um ou mais dispositivos.</p>
+					</details>
+					<details class="help-item">
+						<summary>O dispositivo aparece como "offline". O que fazer?</summary>
+						<p>O status fica "online" enquanto o app sincroniza com o servidor a cada poucos segundos. Se ficar "offline", verifique se o celular/TV está na mesma rede Wi-Fi do backend e se o endereço configurado no app (<code>API_BASE</code>) aponta para o IP correto desta máquina.</p>
+					</details>
+					<details class="help-item">
+						<summary>Uma imagem ou vídeo não aparece no dispositivo</summary>
+						<p>Confira se a programação está realmente vinculada ao dispositivo (aparece como chip na lista de Programação) e se o dispositivo está com status <strong>aprovado</strong> em Dispositivos.</p>
+					</details>
+					<details class="help-item">
+						<summary>Onde vejo o que está acontecendo na rede?</summary>
+						<p>A Visão geral mostra as atividades mais recentes: dispositivos conectando/desconectando, cadastros, aprovações e programações criadas ou vinculadas.</p>
+					</details>
+				</div></article>
+			</section>
+		</main>
+	</div>
+
+	<div class="modal-backdrop" id="linkModal"><div class="modal"><h2>Vincular dispositivo</h2><p>Digite o código exibido na tela do dispositivo e dê um nome para identificá-lo.</p><div class="field"><label for="linkDeviceName">Nome do dispositivo</label><input id="linkDeviceName" placeholder="Ex.: TV Recepção · 01"></div><div class="field"><label for="linkDeviceCode">Código do dispositivo</label><input id="linkDeviceCode" placeholder="MI-XXXXXX" style="text-transform:uppercase"></div><div class="file-error" id="linkError">Preencha o nome e um código válido (MI-XXXXXX).</div><div class="modal-actions"><button class="secondary" id="closeLinkModal">Cancelar</button><button class="primary" id="saveLinkDevice">Vincular</button></div></div></div>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+	<script>
+		function readSetting(key, fallback) {
+			try { return localStorage.getItem(key) || fallback; } catch { return fallback; }
+		}
+
+		const API_BASE = readSetting('magicIndorApiBase', window.MAGIC_INDOOR_API_BASE || 'http://localhost:3000');
+		let POLL_MS = Number.parseInt(readSetting('magicIndorPollSeconds', '5'), 10) * 1000 || 5000;
+		let pollTimer = null;
+
+		// Sessão da conta logada (Supabase Auth). Preenchidos por checkAuthGate() antes de
+		// qualquer chamada à API — o backend agora exige o token em todas as rotas de dados.
+		let authClient = null;
+		let currentAccessToken = null;
+
+		async function apiFetch(url, opts = {}) {
+			const headers = { ...(opts.headers || {}) };
+			if (currentAccessToken) headers.Authorization = `Bearer ${currentAccessToken}`;
+			return fetch(url, { ...opts, headers });
+		}
+
+		const apiStatusEl = document.getElementById('apiStatus');
+		let devicesCache = [];
+		let campaignsCache = [];
+		const expandedCampaignIds = new Set();
+
+		async function runWithSpinner(button, task) {
+			button.classList.add('loading');
+			try { await task(); }
+			finally { button.classList.remove('loading'); }
+		}
+		document.getElementById('refreshCampaigns').addEventListener('click', e => { e.preventDefault(); runWithSpinner(e.currentTarget, loadCampaigns); });
+		document.getElementById('refreshDevices').addEventListener('click', e => { e.preventDefault(); runWithSpinner(e.currentTarget, loadDevices); });
+
+		const linkModal = document.getElementById('linkModal');
+		const linkDeviceName = document.getElementById('linkDeviceName');
+		const linkDeviceCode = document.getElementById('linkDeviceCode');
+		const linkError = document.getElementById('linkError');
+		const saveLinkButton = document.getElementById('saveLinkDevice');
+		const CODE_RE = /^MI-[A-Z0-9]{6}$/;
+
+		document.getElementById('linkDevice').addEventListener('click', () => linkModal.classList.add('open'));
+		document.getElementById('closeLinkModal').addEventListener('click', closeLinkModal);
+		linkModal.addEventListener('click', event => { if (event.target === linkModal) closeLinkModal(); });
+
+		function closeLinkModal() {
+			linkModal.classList.remove('open');
+			linkDeviceName.value = '';
+			linkDeviceCode.value = '';
+			linkError.classList.remove('visible');
+		}
+
+		saveLinkButton.addEventListener('click', async () => {
+			const name = linkDeviceName.value.trim();
+			const code = linkDeviceCode.value.trim().toUpperCase();
+			if (!name || !CODE_RE.test(code)) {
+				linkError.textContent = 'Preencha o nome e um código válido (MI-XXXXXX).';
+				linkError.classList.add('visible');
+				return;
+			}
+			linkError.classList.remove('visible');
+			saveLinkButton.disabled = true; saveLinkButton.textContent = 'Vinculando...';
+			try {
+				const response = await apiFetch(`${API_BASE}/api/devices/link`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ name, code }),
+				});
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.error || 'Falha ao vincular dispositivo.');
+				closeLinkModal();
+				loadDevices();
+				loadCampaigns();
+			} catch (err) {
+				linkError.textContent = err.message || 'Não foi possível falar com a API.';
+				linkError.classList.add('visible');
+			} finally {
+				saveLinkButton.disabled = false; saveLinkButton.textContent = 'Vincular';
+			}
+		});
+
+		function goToView(viewName) {
+			const button = document.querySelector(`.nav button[data-view="${viewName}"]`);
+			if (!button) return;
+			document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+			button.classList.add('active');
+			document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+			document.getElementById(`view-${viewName}`).classList.add('active');
+			document.getElementById('breadcrumbTitle').textContent = button.dataset.title;
+			if (viewName === 'files') loadMedia();
+		}
+
+		document.querySelectorAll('.nav button[data-view]').forEach(button => {
+			button.addEventListener('click', () => goToView(button.dataset.view));
+		});
+		document.querySelectorAll('[data-goto]').forEach(button => {
+			button.addEventListener('click', e => { e.preventDefault(); goToView(button.dataset.goto); });
+		});
+
+		function formatSize(bytes) {
+			return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${(bytes / 1024).toFixed(0)} KB`;
+		}
+
+		function mediaLabel(kind) {
+			if (kind === 'video') return 'Vídeo';
+			if (kind === 'gif') return 'GIF';
+			if (kind === 'web') return 'Dashboard / web';
+			if (kind === 'noticias') return 'Notícias';
+			return 'Imagem';
+		}
+
+		function thumbIcon(kind) {
+			if (kind === 'video') return { cls: 'blue', icon: '▶' };
+			if (kind === 'gif') return { cls: 'coral', icon: '↻' };
+			if (kind === 'web') return { cls: 'yellow', icon: '▦' };
+			if (kind === 'noticias') return { cls: 'yellow', icon: '≡' };
+			return { cls: 'green', icon: '✦' };
+		}
+
+		function isUrlItem(item) { return item.media_kind === 'web' || item.media_kind === 'noticias'; }
+
+		function describeItem(item) {
+			if (!isUrlItem(item)) return `${item.media_name || 'Arquivo'} · ${mediaLabel(item.media_kind)}`;
+			let host = item.source_url || '';
+			try { host = new URL(item.source_url).host; } catch { /* mantem a URL crua */ }
+			const count = item.media_kind === 'noticias' && item.news_count ? ` · ${item.news_count} por vez` : '';
+			return `${item.integration || mediaLabel(item.media_kind)} · ${host}${count}`;
+		}
+
+		function formatDate(isoLike) {
+			const date = new Date(isoLike.replace(' ', 'T') + 'Z');
+			if (isNaN(date.getTime())) return isoLike;
+			return date.toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+		}
+
+		function renderEventItem(event) {
+			const row = document.createElement('div'); row.className = 'event-item';
+			row.innerHTML = `
+				<div class="event-dot type-${event.type}"></div>
+				<div><div class="event-text"></div><div class="event-time">${formatDate(event.created_at)}</div></div>`;
+			row.querySelector('.event-text').textContent = event.message;
+			return row;
+		}
+
+		async function loadEvents(limit, listId, emptyId) {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/events?limit=${limit}`);
+				if (!response.ok) throw new Error();
+				const events = await response.json();
+				const container = document.getElementById(listId);
+				container.replaceChildren(...events.map(renderEventItem));
+				document.getElementById(emptyId).style.display = events.length ? 'none' : 'block';
+				return events;
+			} catch {
+				return null;
+			}
+		}
+
+		function renderOverviewCampaignRow(campaign) {
+			const row = document.createElement('div'); row.className = 'schedule-item';
+			const items = campaign.items || [];
+			const { cls, icon } = thumbIcon(items[0] ? items[0].media_kind : 'imagem');
+			const inUse = campaign.device_count > 0;
+			const countLabel = items.length === 1 ? '1 item' : `${items.length} itens`;
+			row.innerHTML = `
+				<div class="item-main">
+					<div class="thumb ${cls}">${icon}</div>
+					<div style="min-width:0">
+						<div class="item-name"></div>
+						<div class="item-sub">${countLabel} · ${formatDate(campaign.created_at)}</div>
+					</div>
+				</div>
+				<div class="status ${inUse ? '' : 'paused'}">${inUse ? 'Em uso' : 'Sem dispositivo'}</div>`;
+			row.querySelector('.item-name').textContent = campaign.name;
+			return row;
+		}
+
+		function renderOverviewCampaigns() {
+			const latest = campaignsCache.slice(0, 5);
+			document.getElementById('overviewCampaigns').replaceChildren(...latest.map(renderOverviewCampaignRow));
+			document.getElementById('emptyOverviewCampaigns').style.display = latest.length ? 'none' : 'block';
+		}
+
+
+		async function assignCampaign(campaignId, deviceId, selectEl) {
+			if (!deviceId) return;
+			selectEl.disabled = true;
+			try {
+				const response = await apiFetch(`${API_BASE}/api/campaigns/${campaignId}/assign`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ deviceId: Number(deviceId) }),
+				});
+				if (!response.ok) throw new Error();
+				loadCampaigns();
+			} catch {
+				alert('Não foi possível vincular a programação ao dispositivo.');
+				selectEl.disabled = false;
+			}
+		}
+
+		async function unassignCampaign(campaignId, deviceId) {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/campaigns/${campaignId}/assign/${deviceId}`, { method: 'DELETE' });
+				if (!response.ok) throw new Error();
+				loadCampaigns();
+			} catch {
+				alert('Não foi possível desvincular o dispositivo.');
+			}
+		}
+
+		async function deleteCampaign(campaignId) {
+			if (!confirm('Excluir esta programação? Os arquivos continuam na biblioteca.')) return;
+			try {
+				const response = await apiFetch(`${API_BASE}/api/campaigns/${campaignId}`, { method: 'DELETE' });
+				if (!response.ok) throw new Error();
+				loadCampaigns();
+			} catch {
+				alert('Não foi possível excluir a programação.');
+			}
+		}
+
+		function itemDurationText(item) {
+			return item.media_kind === 'video' ? 'até o fim do vídeo' : `${item.duration_seconds}s`;
+		}
+
+		function renderSubItem(index, item) {
+			const row = document.createElement('div'); row.className = 'sub-item';
+			const { cls, icon } = thumbIcon(item.media_kind);
+			const fitText = isUrlItem(item) ? '' : (item.fit_mode === 'adaptavel' ? ' · adaptável à tela' : ' · tamanho original');
+			row.innerHTML = `
+				<span class="item-sub" style="width:18px">${index + 1}.</span>
+				<div class="thumb ${cls}">${icon}</div>
+				<div class="sub-item-info"><div class="item-sub item-desc"></div></div>
+				<span class="item-sub item-time"></span>`;
+			row.querySelector('.item-desc').textContent = describeItem(item) + fitText;
+			row.querySelector('.item-time').textContent = itemDurationText(item);
+			return row;
+		}
+
+		function renderCampaignRow(campaign) {
+			const row = document.createElement('div'); row.className = 'schedule-item';
+			const items = campaign.items || [];
+			const { cls, icon } = thumbIcon(items[0] ? items[0].media_kind : 'imagem');
+			const countLabel = items.length === 1 ? '1 item' : `${items.length} itens`;
+			const cycleSeconds = items.reduce((sum, i) => sum + (i.media_kind === 'video' ? 0 : i.duration_seconds), 0);
+			const cycleLabel = `${cycleSeconds}s${items.some(i => i.media_kind === 'video') ? ' + vídeos' : ''}`;
+
+			const approvedDevices = devicesCache.filter(d => d.status === 'aprovado');
+			const linkedIds = new Set(campaign.devices.map(d => d.id));
+			const options = ['<option value="">Enviar para...</option>']
+				.concat(approvedDevices.filter(d => !linkedIds.has(d.id)).map(d => `<option value="${d.id}">${d.code}</option>`));
+			const chips = campaign.devices.map(d => `<span class="device-chip">${d.name || d.code}<button type="button" data-device-id="${d.id}" title="Desvincular">×</button></span>`).join('');
+
+			row.innerHTML = `
+				<div class="item-main">
+					<button type="button" class="expand-btn" title="Ver itens">▸</button>
+					<div class="thumb ${cls}">${icon}</div>
+					<div style="min-width:0">
+						<div class="item-name"></div>
+						<div class="item-sub">${countLabel} · ciclo ${cycleLabel}${campaign.orientation === 'vertical' ? ' · vertical ▯' : ''} · ${formatDate(campaign.created_at)}<span class="item-count-badge">${items.length}</span></div>
+						<div class="device-chips">${chips || '<span class="item-sub">Sem dispositivo vinculado</span>'}</div>
+					</div>
+				</div>
+				<select class="assign-select"></select>
+				<div class="item-actions">
+					<button type="button" class="icon-btn edit-btn" title="Editar programação">✎</button>
+					<button type="button" class="icon-btn danger delete-btn" title="Excluir programação">🗑</button>
+				</div>
+				<div class="sub-items"></div>`;
+
+			row.querySelector('.item-name').textContent = campaign.name;
+
+			const subItemsEl = row.querySelector('.sub-items');
+			items.forEach((item, index) => subItemsEl.append(renderSubItem(index, item)));
+			if (!items.length) subItemsEl.innerHTML = '<div class="item-sub">Nenhum item nesta programação.</div>';
+
+			const expandBtn = row.querySelector('.expand-btn');
+			const isExpanded = expandedCampaignIds.has(campaign.id);
+			subItemsEl.classList.toggle('open', isExpanded);
+			expandBtn.classList.toggle('open', isExpanded);
+			expandBtn.addEventListener('click', () => {
+				const open = subItemsEl.classList.toggle('open');
+				expandBtn.classList.toggle('open', open);
+				if (open) expandedCampaignIds.add(campaign.id);
+				else expandedCampaignIds.delete(campaign.id);
+			});
+
+			row.querySelector('.edit-btn').addEventListener('click', () => openEditor(campaign));
+			row.querySelector('.delete-btn').addEventListener('click', () => deleteCampaign(campaign.id));
+			row.querySelectorAll('.device-chip button').forEach(btn => {
+				btn.addEventListener('click', () => unassignCampaign(campaign.id, btn.dataset.deviceId));
+			});
+
+			const select = row.querySelector('.assign-select');
+			select.innerHTML = options.join('');
+			select.addEventListener('change', () => assignCampaign(campaign.id, select.value, select));
+			return row;
+		}
+
+		// ---------- Biblioteca de arquivos (tela "Arquivos") ----------
+		const ACCEPTED_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm', 'video/ogg'];
+		const MEDIA_FILTERS = [['todos', 'Todos'], ['imagem', 'Imagens'], ['video', 'Vídeos'], ['gif', 'GIFs']];
+		const UPLOAD_CHUNK = 20;
+		let mediaCache = [];
+		let mediaSignature = '';
+		let filesFilter = 'todos';
+
+		const filesList = document.getElementById('filesList');
+		const filesSearch = document.getElementById('filesSearch');
+		const filesStatus = document.getElementById('filesStatus');
+		const filesInput = document.getElementById('filesInput');
+		const dropZone = document.getElementById('dropZone');
+
+		function setFilesStatus(message, isError = false) {
+			filesStatus.textContent = message;
+			filesStatus.classList.toggle('error', isError);
+		}
+
+		function mediaThumbEl(file) {
+			const box = document.createElement('div'); box.className = 'file-thumb';
+			const url = `${API_BASE}/uploads/${file.file_name}`;
+			if (file.media_kind === 'video') {
+				const video = document.createElement('video');
+				video.src = `${url}#t=0.1`; video.preload = 'metadata'; video.muted = true;
+				box.append(video);
+			} else {
+				const image = document.createElement('img');
+				image.src = url; image.loading = 'lazy'; image.alt = '';
+				box.append(image);
+			}
+			return box;
+		}
+
+		async function renameMediaFile(file, name) {
+			const response = await apiFetch(`${API_BASE}/api/media/${file.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name }),
+			});
+			if (!response.ok) throw new Error();
+		}
+
+		async function deleteMediaFile(file) {
+			const usage = file.usage_count > 0
+				? `\n\nEle é usado em ${file.usage_count} programação(ões) e será removido delas.` : '';
+			if (!confirm(`Excluir "${file.name}" da biblioteca?${usage}`)) return;
+			try {
+				const response = await apiFetch(`${API_BASE}/api/media/${file.id}`, { method: 'DELETE' });
+				if (!response.ok) throw new Error();
+				await loadMedia();
+				loadCampaigns();
+			} catch {
+				alert('Não foi possível excluir o arquivo.');
+			}
+		}
+
+		function renderFileRow(file) {
+			const row = document.createElement('div'); row.className = 'file-row';
+			const link = document.createElement('a');
+			link.href = `${API_BASE}/uploads/${file.file_name}`; link.target = '_blank'; link.rel = 'noopener';
+			link.title = 'Abrir arquivo'; link.append(mediaThumbEl(file));
+			const usage = file.usage_count > 0
+				? `usado em ${file.usage_count} ${file.usage_count === 1 ? 'programação' : 'programações'}` : 'não usado';
+			const meta = document.createElement('div'); meta.className = 'file-meta';
+			meta.innerHTML = `<div class="item-name"></div><div class="item-sub"><span class="type-badge">${mediaLabel(file.media_kind)}</span> · ${formatSize(file.file_size)} · ${formatDate(file.created_at)} · ${usage}</div>`;
+			meta.querySelector('.item-name').textContent = file.name;
+			const actions = document.createElement('div'); actions.className = 'item-actions';
+			actions.innerHTML = '<button type="button" class="icon-btn edit-btn" title="Renomear">✎</button><button type="button" class="icon-btn danger delete-btn" title="Excluir">🗑</button>';
+			row.append(link, meta, actions);
+
+			actions.querySelector('.edit-btn').addEventListener('click', () => {
+				const nameEl = meta.querySelector('.item-name');
+				const input = document.createElement('input');
+				input.className = 'item-name-input'; input.value = file.name;
+				nameEl.replaceWith(input); input.focus(); input.select();
+				let finished = false;
+				const commit = async (save) => {
+					if (finished) return; finished = true;
+					const next = input.value.trim();
+					if (save && next && next !== file.name) {
+						try { await renameMediaFile(file, next); } catch { alert('Não foi possível renomear o arquivo.'); }
+					}
+					mediaSignature = '';
+					loadMedia();
+				};
+				input.addEventListener('keydown', e => { if (e.key === 'Enter') commit(true); if (e.key === 'Escape') commit(false); });
+				input.addEventListener('blur', () => commit(true));
+			});
+			actions.querySelector('.delete-btn').addEventListener('click', () => deleteMediaFile(file));
+			return row;
+		}
+
+		function renderFiles() {
+			const term = filesSearch.value.trim().toLowerCase();
+			filesFiltersEl().replaceChildren(...MEDIA_FILTERS.map(([id, label]) => {
+				const count = id === 'todos' ? mediaCache.length : mediaCache.filter(f => f.media_kind === id).length;
+				const button = document.createElement('button');
+				button.type = 'button'; button.className = 'chip-tab' + (filesFilter === id ? ' active' : '');
+				button.textContent = `${label} (${count})`;
+				button.addEventListener('click', () => { filesFilter = id; renderFiles(); });
+				return button;
+			}));
+			const visible = mediaCache.filter(f => (filesFilter === 'todos' || f.media_kind === filesFilter) && f.name.toLowerCase().includes(term));
+			filesList.replaceChildren(...visible.map(renderFileRow));
+			const empty = document.getElementById('emptyFiles');
+			empty.textContent = mediaCache.length ? 'Nenhum arquivo encontrado com esse filtro.' : 'Sua biblioteca está vazia. Envie imagens, vídeos ou GIFs para começar.';
+			empty.style.display = visible.length ? 'none' : 'block';
+			document.getElementById('filesMeta').textContent = `${mediaCache.length} ${mediaCache.length === 1 ? 'arquivo' : 'arquivos'}`;
+		}
+
+		function filesFiltersEl() { return document.getElementById('filesFilters'); }
+
+		async function loadMedia() {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/media`);
+				if (!response.ok) throw new Error();
+				const files = await response.json();
+				const signature = JSON.stringify(files);
+				if (signature === mediaSignature) return;
+				mediaSignature = signature;
+				mediaCache = files;
+				renderFiles();
+				if (!dragSource && !scheduleEditor.hidden) renderPickList();
+			} catch {
+				setApiOnline(false);
+			}
+		}
+
+		async function uploadFiles(fileList) {
+			const all = Array.from(fileList);
+			const files = all.filter(f => ACCEPTED_MEDIA_TYPES.includes(f.type));
+			const ignored = all.length - files.length;
+			if (!files.length) { setFilesStatus('Nenhum arquivo válido. Use JPG, PNG, GIF, MP4, WebM ou Ogg.', true); return; }
+			let sent = 0;
+			try {
+				for (let start = 0; start < files.length; start += UPLOAD_CHUNK) {
+					const chunk = files.slice(start, start + UPLOAD_CHUNK);
+					setFilesStatus(`Enviando ${sent + 1}–${sent + chunk.length} de ${files.length}...`);
+					const formData = new FormData();
+					chunk.forEach(f => formData.append('files', f));
+					const response = await apiFetch(`${API_BASE}/api/media`, { method: 'POST', body: formData });
+					const data = await response.json();
+					if (!response.ok) throw new Error(data.error || 'Falha no envio.');
+					sent += chunk.length;
+				}
+				setFilesStatus(`${sent} ${sent === 1 ? 'arquivo enviado' : 'arquivos enviados'}${ignored ? ` · ${ignored} ignorado(s) por formato não suportado` : ''}.`);
+			} catch (err) {
+				setFilesStatus(`${err.message || 'Falha no envio.'}${sent ? ` (${sent} já enviado(s))` : ''}`, true);
+			}
+			mediaSignature = '';
+			loadMedia();
+		}
+
+		document.getElementById('uploadFilesBtn').addEventListener('click', () => filesInput.click());
+		dropZone.addEventListener('click', () => filesInput.click());
+		filesInput.addEventListener('change', () => { if (filesInput.files.length) uploadFiles(filesInput.files); filesInput.value = ''; });
+		filesSearch.addEventListener('input', renderFiles);
+		['dragenter', 'dragover'].forEach(name => dropZone.addEventListener(name, e => { e.preventDefault(); dropZone.classList.add('over'); }));
+		['dragleave', 'drop'].forEach(name => dropZone.addEventListener(name, e => { e.preventDefault(); dropZone.classList.remove('over'); }));
+		dropZone.addEventListener('drop', e => { if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files); });
+
+		// ---------- Editor de programação (arrastar da esquerda para a lista final) ----------
+		const TOOL_TEMPLATES = {
+			entretenimentos: [
+				{ kind: 'noticias', integration: 'Notícias', label: 'Notícias (RSS)', icon: '≡', color: '#a94438', placeholder: 'https://exemplo.com/feed.xml', hint: 'Endereço do feed RSS do portal de notícias.' },
+			],
+			ferramentas: [
+				{ kind: 'web', integration: 'Dashboard BI', label: 'Dashboard BI (Looker Studio)', icon: '▦', color: '#c99a2e', placeholder: 'https://lookerstudio.google.com/embed/reporting/...', hint: 'Use o link de incorporação do relatório.' },
+				{ kind: 'web', integration: 'Zabbix', label: 'Zabbix', icon: '▤', color: '#c4483f', placeholder: 'http://servidor/zabbix/zabbix.php?action=dashboard.view&kiosk=1', hint: 'Dashboard do Zabbix (kiosk=1 esconde os menus).' },
+				{ kind: 'web', integration: 'Uptime Kuma', label: 'Uptime Kuma', icon: '◉', color: '#3aa76d', placeholder: 'http://servidor:3001/status/nome', hint: 'URL pública da Status Page.' },
+				{ kind: 'web', integration: 'Grafana', label: 'Grafana', icon: '◔', color: '#e8935c', placeholder: 'http://servidor:3000/d/uid?kiosk', hint: 'Dashboard com modo quiosque e embedding habilitado.' },
+				{ kind: 'web', integration: 'Página web', label: 'Outra página web', icon: '◍', color: '#4a90d9', placeholder: 'https://...', hint: 'A página precisa permitir ser exibida em iframe.' },
+			],
+		};
+		const EDITOR_TABS = [['arquivos', 'Arquivos'], ['entretenimentos', 'Entretenimentos'], ['ferramentas', 'Ferramentas']];
+
+		const scheduleList = document.getElementById('scheduleList');
+		const scheduleEditor = document.getElementById('scheduleEditor');
+		const editorName = document.getElementById('editorName');
+		const editorError = document.getElementById('editorError');
+		const pickList = document.getElementById('pickList');
+		const pickSearch = document.getElementById('pickSearch');
+		const finalList = document.getElementById('finalList');
+		const dropMarker = Object.assign(document.createElement('div'), { className: 'drop-line' });
+		const editor = { id: null, tab: 'arquivos', orientation: 'horizontal', items: [] };
+		let dragSource = null;
+		let uidSeq = 0;
+
+		function allToolTemplates() { return [...TOOL_TEMPLATES.entretenimentos, ...TOOL_TEMPLATES.ferramentas]; }
+		function toolTemplateFor(kind, integration) {
+			return allToolTemplates().find(t => t.kind === kind && t.integration === integration)
+				|| allToolTemplates().find(t => t.kind === kind);
+		}
+
+		function itemFromMedia(media) {
+			return { uid: ++uidSeq, type: 'media', mediaId: media.id, mediaKind: media.media_kind, title: media.name, fileName: media.file_name, duration: 8, fit: 'original' };
+		}
+
+		function itemFromTool(template) {
+			return { uid: ++uidSeq, type: 'tool', kind: template.kind, integration: template.integration, title: template.label, url: '', duration: 15, newsCount: 5 };
+		}
+
+		function itemFromSaved(saved) {
+			if (saved.media_id) {
+				return { uid: ++uidSeq, type: 'media', mediaId: saved.media_id, mediaKind: saved.media_kind, title: saved.media_name || 'Arquivo', fileName: saved.file_name, duration: saved.duration_seconds, fit: saved.fit_mode };
+			}
+			const template = toolTemplateFor(saved.media_kind, saved.integration);
+			return { uid: ++uidSeq, type: 'tool', kind: saved.media_kind, integration: saved.integration, title: template ? template.label : (saved.integration || mediaLabel(saved.media_kind)), url: saved.source_url || '', duration: saved.duration_seconds, newsCount: saved.news_count || 5 };
+		}
+
+		const ORIENTATION_HINTS = {
+			horizontal: 'Para telas deitadas (TV comum) e conteúdo em formato paisagem.',
+			vertical: 'Para telas na vertical, vídeos curtos (shorts) e posts. Se a tela do aparelho estiver deitada, o player gira o conteúdo 90° para a direita — então a TV deve ser montada virada 90° para a esquerda.',
+		};
+
+		function setOrientation(value) {
+			editor.orientation = value === 'vertical' ? 'vertical' : 'horizontal';
+			document.querySelectorAll('#orientationSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === editor.orientation));
+			document.getElementById('orientationHint').textContent = ORIENTATION_HINTS[editor.orientation];
+		}
+
+		document.querySelectorAll('#orientationSeg .seg-btn').forEach(b => b.addEventListener('click', () => setOrientation(b.dataset.value)));
+
+		function showEditorError(message) {
+			editorError.textContent = message;
+			editorError.classList.add('visible');
+		}
+
+		function openEditor(campaign) {
+			editor.id = campaign ? campaign.id : null;
+			editor.tab = 'arquivos';
+			editor.items = campaign ? campaign.items.map(itemFromSaved) : [];
+			setOrientation(campaign ? campaign.orientation : 'horizontal');
+			editorName.value = campaign ? campaign.name : '';
+			pickSearch.value = '';
+			editorError.classList.remove('visible');
+			document.getElementById('editorTitle').textContent = campaign ? 'Editar programação' : 'Nova programação';
+			document.getElementById('editorSave').textContent = campaign ? 'Salvar alterações' : 'Salvar programação';
+			scheduleList.hidden = true;
+			scheduleEditor.hidden = false;
+			renderEditorTabs();
+			renderPickList();
+			renderFinalList();
+			loadMedia();
+			if (!campaign) editorName.focus();
+		}
+
+		function closeEditor() {
+			scheduleEditor.hidden = true;
+			scheduleList.hidden = false;
+			editor.items = [];
+			loadCampaigns();
+		}
+
+		function renderEditorTabs() {
+			document.getElementById('editorTabs').replaceChildren(...EDITOR_TABS.map(([id, label]) => {
+				const button = document.createElement('button');
+				button.type = 'button'; button.className = 'tab' + (editor.tab === id ? ' active' : '');
+				button.textContent = label;
+				button.addEventListener('click', () => { editor.tab = id; pickSearch.value = ''; renderEditorTabs(); renderPickList(); });
+				return button;
+			}));
+			pickSearch.placeholder = `Procurar ${editor.tab === 'arquivos' ? 'arquivo' : editor.tab === 'entretenimentos' ? 'entretenimento' : 'ferramenta'}`;
+		}
+
+		function attachPickDrag(row, build) {
+			row.draggable = true;
+			row.addEventListener('dragstart', e => {
+				dragSource = { src: 'pick', build };
+				e.dataTransfer.effectAllowed = 'copyMove';
+				e.dataTransfer.setData('text/plain', 'magic-indoor-item');
+			});
+			row.addEventListener('dragend', () => { dragSource = null; clearDropMarker(); });
+		}
+
+		function renderPickRow(visual, title, subtitle, build) {
+			const row = document.createElement('div'); row.className = 'pick-item';
+			const info = document.createElement('div'); info.className = 'file-meta';
+			info.innerHTML = '<div class="item-name"></div><div class="item-sub"></div>';
+			info.querySelector('.item-name').textContent = title;
+			info.querySelector('.item-sub').textContent = subtitle;
+			const add = document.createElement('button');
+			add.type = 'button'; add.className = 'icon-btn add-btn'; add.textContent = '+'; add.title = 'Adicionar ao final da lista';
+			add.addEventListener('click', () => addToFinal(build()));
+			row.append(visual, info, add);
+			attachPickDrag(row, build);
+			return row;
+		}
+
+		function renderPickList() {
+			const term = pickSearch.value.trim().toLowerCase();
+			let rows;
+			let emptyMessage;
+			if (editor.tab === 'arquivos') {
+				const files = mediaCache.filter(f => f.name.toLowerCase().includes(term));
+				rows = files.map(file => renderPickRow(mediaThumbEl(file), file.name, mediaLabel(file.media_kind), () => itemFromMedia(file)));
+				emptyMessage = mediaCache.length ? 'Nenhum arquivo encontrado.' : 'Sua biblioteca está vazia. Envie arquivos na tela "Arquivos".';
+			} else {
+				const templates = TOOL_TEMPLATES[editor.tab].filter(t => t.label.toLowerCase().includes(term));
+				rows = templates.map(t => {
+					const icon = document.createElement('div'); icon.className = 'tool-icon';
+					icon.style.background = t.color; icon.textContent = t.icon;
+					return renderPickRow(icon, t.label, t.hint, () => itemFromTool(t));
+				});
+				emptyMessage = 'Nada encontrado.';
+			}
+			if (!rows.length) {
+				const empty = document.createElement('div'); empty.className = 'final-empty'; empty.textContent = emptyMessage;
+				pickList.replaceChildren(empty);
+			} else {
+				pickList.replaceChildren(...rows);
+			}
+		}
+
+		function addToFinal(item, index = editor.items.length) {
+			editor.items.splice(index, 0, item);
+			renderFinalList();
+			finalList.scrollTop = index >= editor.items.length - 1 ? finalList.scrollHeight : finalList.scrollTop;
+		}
+
+		function moveFinal(uid, targetIndex) {
+			const from = editor.items.findIndex(i => i.uid === uid);
+			if (from === -1) return;
+			const [moved] = editor.items.splice(from, 1);
+			editor.items.splice(targetIndex > from ? targetIndex - 1 : targetIndex, 0, moved);
+			renderFinalList();
+		}
+
+		function clearDropMarker() {
+			dropMarker.remove();
+			finalList.classList.remove('over');
+		}
+
+		function dropIndexFromEvent(event) {
+			const rows = [...finalList.querySelectorAll('.final-item')];
+			let index = 0;
+			for (const row of rows) {
+				const box = row.getBoundingClientRect();
+				if (event.clientY > box.top + box.height / 2) index++;
+			}
+			return index;
+		}
+
+		function placeDropMarker(index) {
+			const rows = [...finalList.querySelectorAll('.final-item')];
+			if (rows[index]) finalList.insertBefore(dropMarker, rows[index]);
+			else finalList.append(dropMarker);
+		}
+
+		finalList.addEventListener('dragover', e => {
+			if (!dragSource) return;
+			e.preventDefault();
+			e.dataTransfer.dropEffect = dragSource.src === 'final' ? 'move' : 'copy';
+			finalList.classList.add('over');
+			placeDropMarker(dropIndexFromEvent(e));
+		});
+		finalList.addEventListener('dragleave', e => {
+			if (!finalList.contains(e.relatedTarget)) clearDropMarker();
+		});
+		finalList.addEventListener('drop', e => {
+			if (!dragSource) return;
+			e.preventDefault();
+			const index = dropIndexFromEvent(e);
+			clearDropMarker();
+			if (dragSource.src === 'pick') addToFinal(dragSource.build(), index);
+			else moveFinal(dragSource.uid, index);
+			dragSource = null;
+		});
+
+		function renderFinalItem(item, position) {
+			const row = document.createElement('div'); row.className = 'final-item';
+			row.innerHTML = `
+				<span class="drag-handle" title="Arraste para reordenar">⋮⋮</span>
+				<span class="item-sub order-num">${position + 1}</span>
+				<span class="visual"></span>
+				<div class="title"></div>
+				<span class="news-wrap" hidden><input type="number" class="sub-input news-count" min="1" max="10" title="Quantas notícias aparecem por vez (1 a 10)"> <span class="item-sub">notícias</span></span>
+				<span class="dur-wrap"><input type="number" class="sub-input dur" min="2" max="300" title="Tempo na tela (segundos)"> <span class="item-sub">s</span></span>
+				<span class="item-sub until-end" hidden>até o fim</span>
+				<select class="sub-select fit" title="Como exibir na tela"><option value="original">Original</option><option value="adaptavel">Adaptável</option></select>
+				<button type="button" class="icon-btn danger rm" title="Remover da lista">×</button>
+				<input class="url-input" type="url" hidden>`;
+
+			const visual = row.querySelector('.visual');
+			const isMedia = item.type === 'media';
+			if (isMedia) {
+				visual.append(mediaThumbEl({ file_name: item.fileName, media_kind: item.mediaKind }));
+			} else {
+				const template = toolTemplateFor(item.kind, item.integration);
+				const icon = document.createElement('div'); icon.className = 'tool-icon';
+				icon.style.background = template ? template.color : '#4a90d9';
+				icon.textContent = template ? template.icon : '▦';
+				visual.append(icon);
+			}
+			row.querySelector('.title').textContent = item.title;
+
+			const isVideo = isMedia && item.mediaKind === 'video';
+			const durInput = row.querySelector('.dur');
+			durInput.value = item.duration;
+			durInput.addEventListener('input', () => { item.duration = Number.parseInt(durInput.value, 10) || 8; });
+			const newsWrap = row.querySelector('.news-wrap');
+			newsWrap.hidden = item.kind !== 'noticias';
+			if (item.kind === 'noticias') {
+				const countInput = row.querySelector('.news-count');
+				countInput.value = item.newsCount;
+				countInput.addEventListener('input', () => {
+					item.newsCount = Math.min(10, Math.max(1, Number.parseInt(countInput.value, 10) || 5));
+				});
+			}
+			row.querySelector('.dur-wrap').hidden = isVideo;
+			row.querySelector('.until-end').hidden = !isVideo;
+
+			const fit = row.querySelector('.fit');
+			fit.hidden = !isMedia;
+			fit.value = item.fit || 'original';
+			fit.addEventListener('change', () => { item.fit = fit.value; });
+
+			const urlInput = row.querySelector('.url-input');
+			urlInput.hidden = isMedia;
+			if (!isMedia) {
+				const template = toolTemplateFor(item.kind, item.integration);
+				urlInput.placeholder = template ? template.placeholder : 'https://...';
+				urlInput.value = item.url;
+				urlInput.addEventListener('input', () => { item.url = urlInput.value; });
+			}
+
+			row.querySelector('.rm').addEventListener('click', () => {
+				editor.items = editor.items.filter(i => i.uid !== item.uid);
+				renderFinalList();
+			});
+
+			const handle = row.querySelector('.drag-handle');
+			handle.addEventListener('mousedown', () => { row.draggable = true; });
+			handle.addEventListener('mouseup', () => { row.draggable = false; });
+			row.addEventListener('dragstart', e => {
+				dragSource = { src: 'final', uid: item.uid };
+				row.classList.add('dragging');
+				e.dataTransfer.effectAllowed = 'copyMove';
+				e.dataTransfer.setData('text/plain', 'magic-indoor-item');
+			});
+			row.addEventListener('dragend', () => {
+				row.draggable = false; row.classList.remove('dragging');
+				dragSource = null; clearDropMarker();
+			});
+			return row;
+		}
+
+		function renderFinalList() {
+			const count = editor.items.length;
+			document.getElementById('finalMeta').textContent = `${count} ${count === 1 ? 'item' : 'itens'}`;
+			if (!count) {
+				const empty = document.createElement('div'); empty.className = 'final-empty';
+				empty.textContent = 'Arraste itens da esquerda até aqui (ou clique em +) para montar a ordem de exibição.';
+				finalList.replaceChildren(empty);
+				return;
+			}
+			finalList.replaceChildren(...editor.items.map(renderFinalItem));
+		}
+
+		async function saveEditor() {
+			const name = editorName.value.trim();
+			if (!name) return showEditorError('Informe o nome da programação.');
+			if (!editor.items.length) return showEditorError('Adicione ao menos um item à lista final.');
+			for (const [index, item] of editor.items.entries()) {
+				if (item.type === 'tool' && !/^https?:\/\/\S+$/i.test((item.url || '').trim())) {
+					return showEditorError(`Preencha um endereço válido (http:// ou https://) no item ${index + 1}: ${item.title}.`);
+				}
+			}
+			const body = {
+				name,
+				orientation: editor.orientation,
+				items: editor.items.map(item => item.type === 'media'
+					? { type: 'media', media_id: item.mediaId, duration: item.duration, fit_mode: item.fit }
+					: { type: 'tool', kind: item.kind, url: item.url.trim(), integration: item.integration, duration: item.duration, news_count: item.newsCount }),
+			};
+			const saveBtn = document.getElementById('editorSave');
+			const idleLabel = saveBtn.textContent;
+			saveBtn.disabled = true; saveBtn.textContent = 'Salvando...';
+			editorError.classList.remove('visible');
+			try {
+				const response = await fetch(editor.id ? `${API_BASE}/api/campaigns/${editor.id}` : `${API_BASE}/api/campaigns`, {
+					method: editor.id ? 'PUT' : 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(body),
+				});
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.error || 'Falha ao salvar.');
+				closeEditor();
+			} catch (err) {
+				showEditorError(err.message || 'Não foi possível falar com a API.');
+			} finally {
+				saveBtn.disabled = false; saveBtn.textContent = idleLabel;
+			}
+		}
+
+		document.getElementById('newCampaign').addEventListener('click', () => openEditor(null));
+		document.getElementById('editorCancel').addEventListener('click', closeEditor);
+		document.getElementById('editorSave').addEventListener('click', saveEditor);
+		pickSearch.addEventListener('input', renderPickList);
+
+		async function loadCampaigns() {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/campaigns`);
+				if (!response.ok) throw new Error();
+				const campaigns = await response.json();
+				campaignsCache = campaigns;
+				const container = document.getElementById('campaigns');
+				container.replaceChildren(...campaigns.map(renderCampaignRow));
+				document.getElementById('emptyCampaigns').style.display = campaigns.length ? 'none' : 'block';
+				document.getElementById('campaignsMeta').textContent = `${campaigns.length} ${campaigns.length === 1 ? 'programação cadastrada' : 'programações cadastradas'}`;
+				document.getElementById('kpiCampaigns').textContent = campaigns.length;
+				const assigned = campaigns.filter(c => c.device_count > 0).length;
+				document.getElementById('kpiCampaignsNote').textContent = `${assigned} com dispositivo vinculado`;
+				document.getElementById('kpiAssigned').textContent = assigned;
+				renderOverviewCampaigns();
+				setApiOnline(true);
+			} catch {
+				setApiOnline(false);
+			}
+		}
+
+		async function setDeviceStatus(deviceId, status) {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/devices/${deviceId}/status`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ status }),
+				});
+				if (!response.ok) throw new Error();
+				loadDevices();
+				loadCampaigns();
+			} catch {
+				alert('Não foi possível atualizar o status do dispositivo.');
+			}
+		}
+
+		function isRecentlySeen(device) {
+			if (!device.last_seen_at) return false;
+			const seenAt = new Date(device.last_seen_at.replace(' ', 'T') + 'Z').getTime();
+			return Date.now() - seenAt < 30000;
+		}
+
+		async function deleteDevice(deviceId) {
+			if (!confirm('Excluir este dispositivo? Ele deixará de receber programações e precisará ser vinculado de novo.')) return;
+			try {
+				const response = await apiFetch(`${API_BASE}/api/devices/${deviceId}`, { method: 'DELETE' });
+				if (!response.ok) throw new Error();
+				loadDevices();
+				loadCampaigns();
+			} catch {
+				alert('Não foi possível excluir o dispositivo.');
+			}
+		}
+
+		function renderDeviceRow(device) {
+			const row = document.createElement('div'); row.className = 'device';
+			const disabled = device.status === 'rejeitado';
+			const online = !disabled && isRecentlySeen(device);
+			const statusLabel = disabled ? 'desativado' : (online ? 'online' : 'offline');
+			const statusClass = disabled ? 'pending' : (online ? 'online' : 'online offline');
+			const toggleLabel = disabled ? 'Reativar' : 'Desativar';
+			const toggleTarget = disabled ? 'aprovado' : 'rejeitado';
+			const screenInfo = device.screen_width && device.screen_height
+				? ` · ${device.screen_width}×${device.screen_height}${device.screen_density ? ' · ' + device.screen_density : ''}`
+				: '';
+			row.innerHTML = `
+				<div class="device-info"><div class="device-icon">▯</div><div><div class="device-name">${device.code}</div><div class="device-place">${device.name || 'sem apelido definido'}${screenInfo}</div></div></div>
+				<div class="device-side"><span class="${statusClass}">${statusLabel}</span><div class="device-actions"><button class="mini-btn toggle-status-btn">${toggleLabel}</button><button class="mini-btn reject delete-device-btn">Excluir</button></div></div>`;
+			row.querySelector('.toggle-status-btn').addEventListener('click', () => setDeviceStatus(device.id, toggleTarget));
+			row.querySelector('.delete-device-btn').addEventListener('click', () => deleteDevice(device.id));
+			return row;
+		}
+
+		async function loadDevices() {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/devices`);
+				if (!response.ok) throw new Error();
+				const devices = await response.json();
+				devicesCache = devices;
+				const container = document.getElementById('devices');
+				container.replaceChildren(...devices.map(renderDeviceRow));
+				document.getElementById('emptyDevices').style.display = devices.length ? 'none' : 'block';
+				document.getElementById('devicesMeta').textContent = `${devices.length} dispositivo${devices.length === 1 ? '' : 's'} cadastrado${devices.length === 1 ? '' : 's'}`;
+				const online = devices.filter(d => d.status === 'aprovado' && isRecentlySeen(d)).length;
+				document.getElementById('kpiDevicesOnline').innerHTML = `${online} <small style="font-size:14px;color:var(--muted);font-weight:500">/ ${devices.length}</small>`;
+				document.getElementById('kpiDevicesNote').textContent = devices.length ? `${Math.round((online / devices.length) * 100)}% da rede conectada` : 'nenhum dispositivo ainda';
+				document.getElementById('kpiPending').textContent = devices.filter(d => d.status === 'rejeitado').length;
+				setApiOnline(true);
+			} catch {
+				setApiOnline(false);
+			}
+		}
+
+		function setApiOnline(online) {
+			apiStatusEl.textContent = online ? `Conectado à API em ${API_BASE}` : `Não foi possível conectar à API em ${API_BASE}`;
+			apiStatusEl.className = `api-status ${online ? 'online' : 'offline'}`;
+		}
+
+		function refreshAll() {
+			loadDevices();
+			loadCampaigns();
+			loadMedia();
+			loadEvents(10, 'overviewEvents', 'emptyOverviewEvents');
+		}
+
+		function startPolling() {
+			if (pollTimer) clearInterval(pollTimer);
+			pollTimer = setInterval(refreshAll, POLL_MS);
+		}
+
+
+		// Configurações
+		const settingAgencyName = document.getElementById('settingAgencyName');
+		const settingPollInterval = document.getElementById('settingPollInterval');
+		const settingApiBase = document.getElementById('settingApiBase');
+		const settingsSaveNote = document.getElementById('settingsSaveNote');
+		const agencyNameEl = document.querySelector('.account b');
+
+		function applyAgencyName(name) {
+			if (name && agencyNameEl) agencyNameEl.textContent = name;
+		}
+
+		function loadSettingsForm() {
+			settingAgencyName.value = readSetting('magicIndorAgencyName', 'Agência Mídia');
+			settingPollInterval.value = String(POLL_MS / 1000);
+			settingApiBase.value = API_BASE;
+		}
+		applyAgencyName(readSetting('magicIndorAgencyName', ''));
+		loadSettingsForm();
+
+		document.getElementById('saveSettings').addEventListener('click', () => {
+			try {
+				localStorage.setItem('magicIndorAgencyName', settingAgencyName.value.trim() || 'Agência Mídia');
+				const seconds = Math.min(120, Math.max(3, Number.parseInt(settingPollInterval.value, 10) || 5));
+				localStorage.setItem('magicIndorPollSeconds', String(seconds));
+				const newApiBase = settingApiBase.value.trim() || 'http://localhost:3000';
+				const apiBaseChanged = newApiBase !== API_BASE;
+				localStorage.setItem('magicIndorApiBase', newApiBase);
+				if (apiBaseChanged) { location.reload(); return; }
+				POLL_MS = seconds * 1000;
+				applyAgencyName(settingAgencyName.value.trim());
+				startPolling();
+				settingsSaveNote.classList.add('visible');
+				setTimeout(() => settingsSaveNote.classList.remove('visible'), 2500);
+			} catch {
+				alert('Não foi possível salvar as configurações neste navegador.');
+			}
+		});
+
+		// Dados da empresa (ficam no backend, não só neste navegador).
+		const companyNote = document.getElementById('companySaveNote');
+		async function loadCompanySettings() {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/company`);
+				if (!response.ok) throw new Error();
+				const data = await response.json();
+				document.getElementById('settingRazaoSocial').value = data.razao_social || '';
+				document.getElementById('settingCnpj').value = data.cnpj || '';
+				document.getElementById('settingEndereco').value = data.endereco || '';
+			} catch { /* backend pode estar fora do ar; mantem os campos vazios */ }
+		}
+		document.getElementById('saveCompany').addEventListener('click', async () => {
+			try {
+				const response = await apiFetch(`${API_BASE}/api/company`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						razao_social: document.getElementById('settingRazaoSocial').value.trim(),
+						cnpj: document.getElementById('settingCnpj').value.trim(),
+						endereco: document.getElementById('settingEndereco').value.trim(),
+					}),
+				});
+				if (!response.ok) throw new Error();
+				companyNote.classList.add('visible');
+				setTimeout(() => companyNote.classList.remove('visible'), 2500);
+			} catch {
+				alert('Não foi possível salvar os dados da empresa.');
+			}
+		});
+		loadCompanySettings();
+
+		// Integração Supabase (contas individuais) — guardada neste navegador por enquanto.
+		const supabaseNote = document.getElementById('supabaseSaveNote');
+		document.getElementById('settingSupabaseUrl').value = readSetting('magicIndorSupabaseUrl', '');
+		document.getElementById('settingSupabaseKey').value = readSetting('magicIndorSupabaseAnonKey', '');
+		document.getElementById('saveSupabase').addEventListener('click', () => {
+			try {
+				localStorage.setItem('magicIndorSupabaseUrl', document.getElementById('settingSupabaseUrl').value.trim());
+				localStorage.setItem('magicIndorSupabaseAnonKey', document.getElementById('settingSupabaseKey').value.trim());
+				supabaseNote.classList.add('visible');
+				setTimeout(() => supabaseNote.classList.remove('visible'), 3000);
+			} catch {
+				alert('Não foi possível salvar a integração neste navegador.');
+			}
+		});
+
+		// Conta individual: o painel agora exige sessão Supabase para tudo (o backend recusa
+		// qualquer chamada de API sem token válido). A URL/chave vem do backend (backend/.env)
+		// por padrão; um valor salvo em Configurações (localStorage) tem prioridade, para
+		// apontar este painel a outro projeto Supabase.
+		// Retorna true se há sessão válida (e então preenche authClient/currentAccessToken
+		// para o apiFetch usar); caso contrário redireciona para /login e retorna false.
+		async function checkAuthGate() {
+			let supabaseUrl = readSetting('magicIndorSupabaseUrl', '');
+			let supabaseAnonKey = readSetting('magicIndorSupabaseAnonKey', '');
+			if (!supabaseUrl || !supabaseAnonKey) {
+				try {
+					const response = await fetch(`${API_BASE}/api/config`);
+					if (response.ok) {
+						const config = await response.json();
+						supabaseUrl = supabaseUrl || config.supabaseUrl;
+						supabaseAnonKey = supabaseAnonKey || config.supabaseAnonKey;
+					}
+				} catch { /* backend fora do ar */ }
+			}
+			if (!supabaseUrl || !supabaseAnonKey || !window.supabase) {
+				window.location.href = '/login';
+				return false;
+			}
+
+			authClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+			const { data } = await authClient.auth.getSession();
+			if (!data.session) { window.location.href = '/login'; return false; }
+
+			currentAccessToken = data.session.access_token;
+			authClient.auth.onAuthStateChange((_event, session) => {
+				currentAccessToken = session ? session.access_token : null;
+				if (!session) window.location.href = '/login';
+			});
+
+			const email = data.session.user.email || '';
+			document.getElementById('accountEmail').textContent = email;
+			document.getElementById('accountAvatar').textContent = email.slice(0, 2).toUpperCase();
+			const logoutBtn = document.getElementById('logoutBtn');
+			logoutBtn.hidden = false;
+			logoutBtn.addEventListener('click', async () => {
+				await authClient.auth.signOut();
+				window.location.href = '/login';
+			});
+			return true;
+		}
+
+		(async () => {
+			const authenticated = await checkAuthGate();
+			if (!authenticated) return;
+			refreshAll();
+			startPolling();
+		})();
+	</script>
+</body>
+</html>

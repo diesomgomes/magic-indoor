@@ -6,11 +6,27 @@ services:
     container_name: magicindor-backend
     restart: unless-stopped
     ports:
-      # so em loopback: o nginx do host e quem fala com a internet (ver DEPLOY.md)
+      # loopback, so pra debug local (curl http://localhost:3000). Quem fala com a
+      # internet e o nginx-proxy que ja roda na VPS, via a rede externa abaixo.
       - "127.0.0.1:3000:3000"
+    environment:
+      # nginx-proxy + acme-companion (ja rodando na VPS) descobrem este container
+      # por essas variaveis: roteiam o dominio pra ele e emitem o certificado sozinhos.
+      - VIRTUAL_HOST=magic.vartec.com.br
+      - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=magic.vartec.com.br
+      - LETSENCRYPT_EMAIL=gomesdieison99@gmail.com
     env_file:
       - backend/.env
     volumes:
       # bind mount para os uploads sobreviverem a rebuilds/restarts do container
       # e ficarem faceis de fazer backup direto no host
       - ./backend/uploads:/app/backend/uploads
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: caju-id_default

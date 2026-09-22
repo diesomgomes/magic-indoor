@@ -29,6 +29,16 @@
     .empty-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; padding: 8vh 8vw; text-align: center; color: var(--paper); font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(to top, rgba(5, 11, 20, .72) 0%, rgba(5, 11, 20, .25) 45%, transparent 75%); }
     .empty-overlay h1 { font-size: clamp(22px, 3.4vw, 36px); font-weight: 700; letter-spacing: -.02em; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
     .empty-overlay p { margin: 0; color: #cbdaf0; font-size: clamp(12px, 1.4vw, 15px); }
+
+    /* Codigo do aparelho: fica sempre visivel enquanto nada esta de fato tocando
+       (aguardando vinculo OU ja vinculado mas sem programacao), pra sempre dar pra
+       ler na tela e digitar no painel. */
+    .code-badge { position: fixed; top: 24px; right: 24px; z-index: 5; display: none;
+      padding: 10px 20px; border: 1px solid rgba(79, 143, 240, .4); border-radius: 8px; background: rgba(10, 21, 38, .78);
+      backdrop-filter: blur(4px); text-align: center; font-family: 'Segoe UI', Arial, sans-serif; }
+    .code-badge.visible { display: block; }
+    .code-badge .label { color: #93a9cc; font-size: clamp(10px, 1.1vw, 12px); margin-bottom: 4px; }
+    .code-badge .code { font: 700 clamp(18px, 3vw, 26px) 'DM Mono', 'Consolas', monospace; letter-spacing: .08em; color: var(--lime); }
   </style>
 </head>
 <body>
@@ -75,6 +85,10 @@
       <p>Nenhum conteúdo vinculado a este dispositivo ainda.</p>
     </div>
   </div>
+  <div class="code-badge" id="codeBadge">
+    <div class="label">Código do dispositivo</div>
+    <div class="code" id="codeBadgeText">MI-------</div>
+  </div>
   <script>
     var waiting = document.getElementById('waiting');
     var emptyState = document.getElementById('emptyState');
@@ -91,9 +105,12 @@
     }
     window.addEventListener('resize', function () { applyOrientation(currentOrientation); });
     var pairCode = document.getElementById('pairCode');
+    var codeBadge = document.getElementById('codeBadge');
+    var codeBadgeText = document.getElementById('codeBadgeText');
 
     function setDeviceCode(code) {
       pairCode.textContent = code;
+      codeBadgeText.textContent = code;
     }
     window.setDeviceCode = setDeviceCode;
 
@@ -107,6 +124,7 @@
       var item = playlist[currentIndex];
       waiting.classList.add('hidden');
       emptyState.classList.add('hidden');
+      codeBadge.classList.remove('visible');
       applyOrientation(item.orientation);
       var adaptavel = item.fitMode === 'adaptavel';
       var seconds = item.duration > 0 ? item.duration : 8;
@@ -161,6 +179,7 @@
       stopFrame();
       waiting.classList.add('hidden');
       emptyState.classList.remove('hidden');
+      codeBadge.classList.add('visible');
     }
 
     function updatePlaylist(json) {
@@ -186,6 +205,7 @@
       video.onended = null;
       stopFrame();
       emptyState.classList.add('hidden');
+      codeBadge.classList.remove('visible');
       waiting.classList.remove('hidden');
     }
 

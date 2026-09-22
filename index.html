@@ -1179,7 +1179,7 @@
 			saveBtn.disabled = true; saveBtn.textContent = 'Salvando...';
 			editorError.classList.remove('visible');
 			try {
-				const response = await fetch(editor.id ? `${API_BASE}/api/campaigns/${editor.id}` : `${API_BASE}/api/campaigns`, {
+				const response = await apiFetch(editor.id ? `${API_BASE}/api/campaigns/${editor.id}` : `${API_BASE}/api/campaigns`, {
 					method: editor.id ? 'PUT' : 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(body),

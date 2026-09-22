@@ -897,7 +897,7 @@
 		}
 
 		function itemFromMedia(media) {
-			return { uid: ++uidSeq, type: 'media', mediaId: media.id, mediaKind: media.media_kind, title: media.name, fileName: media.file_name, duration: 8, fit: 'original' };
+			return { uid: ++uidSeq, type: 'media', mediaId: media.id, mediaKind: media.media_kind, title: media.name, fileName: media.file_name, duration: 8, fit: 'original', rotation: 0 };
 		}
 
 		function itemFromTool(template) {
@@ -906,7 +906,7 @@
 
 		function itemFromSaved(saved) {
 			if (saved.media_id) {
-				return { uid: ++uidSeq, type: 'media', mediaId: saved.media_id, mediaKind: saved.media_kind, title: saved.media_name || 'Arquivo', fileName: saved.file_name, duration: saved.duration_seconds, fit: saved.fit_mode };
+				return { uid: ++uidSeq, type: 'media', mediaId: saved.media_id, mediaKind: saved.media_kind, title: saved.media_name || 'Arquivo', fileName: saved.file_name, duration: saved.duration_seconds, fit: saved.fit_mode, rotation: saved.rotation || 0 };
 			}
 			const template = toolTemplateFor(saved.media_kind, saved.integration);
 			return { uid: ++uidSeq, type: 'tool', kind: saved.media_kind, integration: saved.integration, title: template ? template.label : (saved.integration || mediaLabel(saved.media_kind)), url: saved.source_url || '', duration: saved.duration_seconds, newsCount: saved.news_count || 5 };
@@ -1082,6 +1082,7 @@
 				<span class="dur-wrap"><input type="number" class="sub-input dur" min="2" max="300" title="Tempo na tela (segundos)"> <span class="item-sub">s</span></span>
 				<span class="item-sub until-end" hidden>até o fim</span>
 				<select class="sub-select fit" title="Como exibir na tela"><option value="original">Original</option><option value="adaptavel">Adaptável</option></select>
+				<select class="sub-select rotate" title="Girar o conteúdo" hidden><option value="0">Sem giro</option><option value="90">90°</option><option value="180">180° (de cabeça p/ baixo)</option><option value="270">270°</option></select>
 				<button type="button" class="icon-btn danger rm" title="Remover da lista">×</button>
 				<input class="url-input" type="url" hidden>`;
 
@@ -1117,7 +1118,17 @@
 			const fit = row.querySelector('.fit');
 			fit.hidden = !isMedia;
 			fit.value = item.fit || 'original';
-			fit.addEventListener('change', () => { item.fit = fit.value; });
+
+			const rotate = row.querySelector('.rotate');
+			rotate.value = String(item.rotation || 0);
+			rotate.hidden = !isMedia || fit.value !== 'adaptavel';
+			rotate.addEventListener('change', () => { item.rotation = Number.parseInt(rotate.value, 10) || 0; });
+
+			fit.addEventListener('change', () => {
+				item.fit = fit.value;
+				rotate.hidden = !isMedia || fit.value !== 'adaptavel';
+				if (fit.value !== 'adaptavel') { item.rotation = 0; rotate.value = '0'; }
+			});
 
 			const urlInput = row.querySelector('.url-input');
 			urlInput.hidden = isMedia;
@@ -1174,7 +1185,7 @@
 				name,
 				orientation: editor.orientation,
 				items: editor.items.map(item => item.type === 'media'
-					? { type: 'media', media_id: item.mediaId, duration: item.duration, fit_mode: item.fit }
+					? { type: 'media', media_id: item.mediaId, duration: item.duration, fit_mode: item.fit, rotation: item.rotation || 0 }
 					: { type: 'tool', kind: item.kind, url: item.url.trim(), integration: item.integration, duration: item.duration, news_count: item.newsCount }),
 			};
 			const saveBtn = document.getElementById('editorSave');

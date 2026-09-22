@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
             for (int i = 0; i < items.length(); i++) {
                 JSONObject sourceItem = items.getJSONObject(i);
                 JSONObject item = new JSONObject();
-                item.put("id", sourceItem.optLong("id", -1));
+                item.put("id", sourceItem.optString("id", ""));
                 String kind = sourceItem.optString("media_kind", "imagem");
                 if ("web".equals(kind)) {
                     item.put("url", sourceItem.optString("source_url", ""));
@@ -146,6 +146,7 @@ public class MainActivity extends Activity {
                 item.put("kind", kind);
                 item.put("duration", sourceItem.optInt("duration_seconds", 8));
                 item.put("fitMode", sourceItem.optString("fit_mode", "original"));
+                item.put("rotation", sourceItem.optInt("rotation", 0));
                 item.put("orientation", sourceItem.optString("orientation", "horizontal"));
                 playlist.put(item);
             }

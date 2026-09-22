@@ -65,6 +65,7 @@ create table if not exists public.campaign_items (
   media_kind text not null,
   duration_seconds integer not null default 8,
   fit_mode text not null default 'original' check (fit_mode in ('original', 'adaptavel')),
+  rotation integer not null default 0 check (rotation in (0, 90, 180, 270)),
   position integer not null default 0,
   source_url text,
   integration text,

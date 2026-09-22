@@ -24,6 +24,11 @@ function parseDuration(raw) {
 function parseFitMode(raw) {
   return FIT_MODES.includes(raw) ? raw : 'original';
 }
+const ROTATIONS = [0, 90, 180, 270];
+function parseRotation(raw) {
+  const value = Number.parseInt(raw, 10);
+  return ROTATIONS.includes(value) ? value : 0;
+}
 function parseNewsCount(raw) {
   const value = Number.parseInt(raw, 10);
   if (Number.isNaN(value)) return DEFAULT_NEWS_COUNT;
@@ -72,6 +77,9 @@ async function parseBody(supabase, body) {
   for (const raw of items) {
     const duration = parseDuration(raw && raw.duration);
     const fitMode = parseFitMode(raw && raw.fit_mode);
+    // Girar so faz sentido com o encaixe adaptavel (cobre a tela) — no original a imagem
+    // ja aparece inteira, entao ignoramos rotation fora desse modo.
+    const rotation = fitMode === 'adaptavel' ? parseRotation(raw && raw.rotation) : 0;
 
     if (raw && raw.type === 'media') {
       const { data: media } = await supabase.from('media_files').select('*').eq('id', raw.media_id).maybeSingle();
@@ -84,6 +92,7 @@ async function parseBody(supabase, body) {
         media_kind: media.media_kind,
         duration_seconds: duration,
         fit_mode: fitMode,
+        rotation,
         source_url: null,
         integration: null,
         news_count: null,

@@ -262,7 +262,7 @@
 		</aside>
 
 		<main class="main">
-			<header class="topbar"><div class="breadcrumb">Workspace / <strong id="breadcrumbTitle">Visão geral</strong></div><div class="top-actions"><button class="bell" aria-label="Notificações">♧</button><button class="help">Falar com suporte</button></div></header>
+			<header class="topbar"><div class="breadcrumb">Workspace / <strong id="breadcrumbTitle">Visão geral</strong></div></header>
 
 			<section class="view active" id="view-overview">
 				<section class="intro"><div><h1 id="greeting">Bom dia!</h1><p>Acompanhe o que está acontecendo na sua rede de mídia hoje.</p><div class="api-status" id="apiStatus">Conectando à API...</div></div></section>
@@ -331,6 +331,21 @@
 
 			<section class="view" id="view-settings">
 				<section class="intro"><div><h1>Configurações</h1><p>Preferências do painel e dados cadastrais da empresa.</p></div></section>
+
+				<article class="panel" style="margin-bottom:18px"><div class="settings-panel">
+					<div class="panel-title" style="margin-bottom:16px">Sua conta</div>
+					<div class="field"><label for="settingUserName">Seu nome</label><input id="settingUserName" placeholder="Ex.: Amanda Ribeiro"></div>
+					<button class="primary" id="saveUserName">Salvar nome</button>
+					<div class="save-note" id="userNameSaveNote">Nome atualizado.</div>
+					<div class="field" style="margin-top:20px"><label for="settingEmail">E-mail de acesso</label><input id="settingEmail" type="email" placeholder="voce@empresa.com"><div class="settings-note">Ao trocar, o Supabase envia um e-mail de confirmação para o endereço novo.</div></div>
+					<button class="primary" id="saveEmail">Salvar e-mail</button>
+					<div class="save-note" id="emailSaveNote">Confira sua caixa de entrada para confirmar o novo e-mail.</div>
+					<div class="field" style="margin-top:20px"><label for="settingNewPassword">Nova senha</label><input id="settingNewPassword" type="password" placeholder="Mínimo 6 caracteres"></div>
+					<div class="field"><label for="settingConfirmPassword">Confirmar nova senha</label><input id="settingConfirmPassword" type="password" placeholder="Repita a senha"></div>
+					<div class="file-error" id="passwordError">As senhas não coincidem (mínimo 6 caracteres).</div>
+					<button class="primary" id="savePassword">Salvar senha</button>
+					<div class="save-note" id="passwordSaveNote">Senha atualizada.</div>
+				</div></article>
 
 				<article class="panel" style="margin-bottom:18px"><div class="settings-panel">
 					<div class="panel-title" style="margin-bottom:16px">Dados da empresa</div>
@@ -1308,7 +1323,6 @@
 
 		document.getElementById('saveSettings').addEventListener('click', () => {
 			try {
-				localStorage.setItem('magicIndorAgencyName', settingAgencyName.value.trim() || 'Agência Mídia');
 				const seconds = Math.min(120, Math.max(3, Number.parseInt(settingPollInterval.value, 10) || 5));
 				localStorage.setItem('magicIndorPollSeconds', String(seconds));
 				const newApiBase = settingApiBase.value.trim();
@@ -1321,6 +1335,63 @@
 				setTimeout(() => settingsSaveNote.classList.remove('visible'), 2500);
 			} catch {
 				alert('Não foi possível salvar as configurações neste navegador.');
+			}
+		});
+
+		// Sua conta: nome, e-mail e senha, direto pelo Supabase Auth.
+		function loadAccountForm(user) {
+			document.getElementById('settingUserName').value = (user.user_metadata && user.user_metadata.full_name) || '';
+			document.getElementById('settingEmail').value = user.email || '';
+		}
+
+		const userNameNote = document.getElementById('userNameSaveNote');
+		document.getElementById('saveUserName').addEventListener('click', async () => {
+			const name = document.getElementById('settingUserName').value.trim();
+			if (!name) return;
+			try {
+				await authClient.auth.updateUser({ data: { full_name: name } });
+				const { data } = await authClient.auth.getUser();
+				updateAccountDisplay(data.user);
+				userNameNote.classList.add('visible');
+				setTimeout(() => userNameNote.classList.remove('visible'), 2500);
+			} catch {
+				alert('Não foi possível salvar o nome.');
+			}
+		});
+
+		const emailNote = document.getElementById('emailSaveNote');
+		document.getElementById('saveEmail').addEventListener('click', async () => {
+			const email = document.getElementById('settingEmail').value.trim();
+			if (!email) return;
+			try {
+				const { error } = await authClient.auth.updateUser({ email });
+				if (error) throw error;
+				emailNote.classList.add('visible');
+				setTimeout(() => emailNote.classList.remove('visible'), 4000);
+			} catch (err) {
+				alert(err.message || 'Não foi possível trocar o e-mail.');
+			}
+		});
+
+		const passwordError = document.getElementById('passwordError');
+		const passwordNote = document.getElementById('passwordSaveNote');
+		document.getElementById('savePassword').addEventListener('click', async () => {
+			const newPassword = document.getElementById('settingNewPassword').value;
+			const confirmPassword = document.getElementById('settingConfirmPassword').value;
+			if (newPassword.length < 6 || newPassword !== confirmPassword) {
+				passwordError.classList.add('visible');
+				return;
+			}
+			passwordError.classList.remove('visible');
+			try {
+				const { error } = await authClient.auth.updateUser({ password: newPassword });
+				if (error) throw error;
+				document.getElementById('settingNewPassword').value = '';
+				document.getElementById('settingConfirmPassword').value = '';
+				passwordNote.classList.add('visible');
+				setTimeout(() => passwordNote.classList.remove('visible'), 2500);
+			} catch (err) {
+				alert(err.message || 'Não foi possível trocar a senha.');
 			}
 		});
 
@@ -1449,6 +1520,7 @@
 			});
 
 			updateAccountDisplay(data.session.user);
+			loadAccountForm(data.session.user);
 			const logoutBtn = document.getElementById('logoutBtn');
 			logoutBtn.hidden = false;
 			logoutBtn.addEventListener('click', async () => {

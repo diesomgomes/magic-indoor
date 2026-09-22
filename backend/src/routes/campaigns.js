@@ -109,6 +109,7 @@ async function parseBody(supabase, body) {
         media_kind: raw.kind,
         duration_seconds: duration,
         fit_mode: fitMode,
+        rotation,
         source_url: url,
         integration,
         news_count: raw.kind === 'noticias' ? parseNewsCount(raw.news_count) : null,

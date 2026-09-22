@@ -531,7 +531,7 @@
 		}
 
 		function formatDate(isoLike) {
-			const date = new Date(isoLike.replace(' ', 'T') + 'Z');
+			const date = new Date(isoLike);
 			if (isNaN(date.getTime())) return isoLike;
 			return date.toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 		}

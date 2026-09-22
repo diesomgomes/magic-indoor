@@ -1,0 +1,23 @@
+name: Supabase keep-alive
+
+# Projetos gratuitos do Supabase pausam depois de ~7 dias sem atividade na API.
+# Isso faz uma consulta leve a cada 3 dias so pra manter o projeto "vivo",
+# independente do backend estar rodando em algum servidor ou nao.
+on:
+  schedule:
+    - cron: '0 5 */3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          curl -sf "$SUPABASE_URL/rest/v1/events?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -o /dev/null -w "status: %{http_code}\n"
+        env:
+          SUPABASE_URL: https://jzbbhwqspquplzwjlrcn.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6YmJod3FzcHF1cGx6d2pscmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNzA3NTgsImV4cCI6MjEwNTY0Njc1OH0.cVxj80LhTVY_kBiO3bLBM_flhwFUKaMJWWu3b3N_YEM

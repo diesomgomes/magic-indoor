@@ -16,3 +16,8 @@ local.properties
 
 .DS_Store
 Thumbs.db
+
+# Desktop player (Electron)
+desktop-player/node_modules/
+desktop-player/dist/
+desktop-player/dist-installer/

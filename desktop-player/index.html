@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Magic Indoor Player</title>
+  <style>
+    :root { color-scheme: dark; --ink: #101a2c; --lime: #4f8ff0; --paper: #eaf1fb; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; }
+    .media-fill { max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; display: none; }
+    .media-fill.fit-adaptavel { object-fit: cover; }
+    /* Giro manual (so com encaixe adaptavel), pra corrigir conteudo que renderiza de
+       cabeca para baixo ou de lado dependendo de como a tela foi montada. */
+    .media-fill.rotate-180 { transform: rotate(180deg); }
+    .media-fill.rotate-90, .media-fill.rotate-270 {
+      position: absolute; top: 50%; left: 50%; max-width: none; max-height: none;
+      width: 100vh; height: 100vw; transform-origin: center center;
+    }
+    .media-fill.rotate-90 { transform: translate(-50%, -50%) rotate(90deg); }
+    .media-fill.rotate-270 { transform: translate(-50%, -50%) rotate(270deg); }
+    /* Orientacao diferente da tela: o palco vira um retangulo com largura/altura trocadas e gira 90 graus. */
+    .stage.rotated { inset: auto; top: 0; left: 100vw; width: 100vh; height: 100vw; transform-origin: top left; transform: rotate(90deg); }
+
+    .waiting { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; background: radial-gradient(circle at 50% 40%, #1c3560 0%, #0a1526 70%); color: var(--paper); font-family: 'Segoe UI', Arial, sans-serif; text-align: center; padding: 8vw; }
+    .waiting.hidden { display: none; }
+    .spinner { width: 46px; height: 46px; border-radius: 50%; border: 3px solid rgba(79, 143, 240, .18); border-top-color: var(--lime); animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .waiting h1 { font-size: clamp(20px, 3vw, 32px); font-weight: 700; letter-spacing: -.02em; margin: 0; max-width: 720px; line-height: 1.3; }
+    .waiting p { margin: 0; color: #93a9cc; font-size: clamp(12px, 1.4vw, 15px); font-family: 'DM Mono', 'Consolas', monospace; }
+    .pair-code { margin-top: 6px; padding: 14px 26px; border: 1px solid rgba(79, 143, 240, .35); border-radius: 8px; background: rgba(79, 143, 240, .08); font: 700 clamp(22px, 4vw, 34px) 'DM Mono', 'Consolas', monospace; letter-spacing: .08em; color: var(--lime); }
+    .pair-hint { color: #7c8fb0; font-size: clamp(11px, 1.2vw, 13px); max-width: 460px; }
+
+    .empty-state { position: fixed; inset: 0; overflow: hidden; background: #0d1b2a; }
+    .empty-state.hidden { display: none; }
+    .empty-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .empty-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; padding: 8vh 8vw; text-align: center; color: var(--paper); font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(to top, rgba(5, 11, 20, .72) 0%, rgba(5, 11, 20, .25) 45%, transparent 75%); }
+    .empty-overlay h1 { font-size: clamp(22px, 3.4vw, 36px); font-weight: 700; letter-spacing: -.02em; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+    .empty-overlay p { margin: 0; color: #cbdaf0; font-size: clamp(12px, 1.4vw, 15px); }
+
+    /* Codigo do "dispositivo": fica sempre visivel enquanto nada esta de fato tocando
+       (aguardando vinculo OU ja vinculado mas sem programacao). */
+    .code-badge { position: fixed; top: 24px; right: 24px; z-index: 5; display: none;
+      padding: 10px 20px; border: 1px solid rgba(79, 143, 240, .4); border-radius: 8px; background: rgba(10, 21, 38, .78);
+      backdrop-filter: blur(4px); text-align: center; font-family: 'Segoe UI', Arial, sans-serif; }
+    .code-badge.visible { display: block; }
+    .code-badge .label { color: #93a9cc; font-size: clamp(10px, 1.1vw, 12px); margin-bottom: 4px; }
+    .code-badge .code { font: 700 clamp(18px, 3vw, 26px) 'DM Mono', 'Consolas', monospace; letter-spacing: .08em; color: var(--lime); }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <img id="mediaImg" class="media-fill" alt="">
+    <video id="mediaVideo" class="media-fill" autoplay muted playsinline></video>
+    <iframe id="mediaFrame" class="media-fill" style="border:0;background:#000" allow="autoplay; fullscreen"></iframe>
+  </div>
+  <div class="waiting" id="waiting">
+    <div class="spinner"></div>
+    <h1>Aguardando conexão com servidor, aguarde.</h1>
+    <div class="pair-code" id="pairCode">MI-------</div>
+    <p class="pair-hint">Use este código para vincular o dispositivo à plataforma Magic Indoor.</p>
+  </div>
+  <div class="empty-state hidden" id="emptyState">
+    <svg class="empty-bg" viewBox="0 0 800 420" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0d1b2a"/>
+          <stop offset="55%" stop-color="#1c3560"/>
+          <stop offset="100%" stop-color="#2f5fa8"/>
+        </linearGradient>
+        <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#bfe3ff"/>
+          <stop offset="100%" stop-color="#4f8ff0" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="800" height="420" fill="url(#sky)"/>
+      <circle cx="600" cy="120" r="130" fill="url(#sun)"/>
+      <circle cx="600" cy="120" r="46" fill="#eaf1fb"/>
+      <g fill="#bfe3ff" opacity="0.8">
+        <circle cx="120" cy="70" r="2.2"/>
+        <circle cx="200" cy="140" r="1.6"/>
+        <circle cx="90" cy="180" r="1.8"/>
+        <circle cx="330" cy="60" r="1.6"/>
+        <circle cx="700" cy="60" r="1.8"/>
+        <circle cx="760" cy="160" r="1.6"/>
+      </g>
+      <path d="M0 300 L120 210 L220 280 L330 190 L430 300 L520 230 L620 290 L720 220 L800 300 L800 420 L0 420 Z" fill="#12233f" opacity="0.85"/>
+      <path d="M0 340 L100 270 L210 330 L300 250 L420 340 L540 260 L650 330 L800 260 L800 420 L0 420 Z" fill="#0d1b2a"/>
+    </svg>
+    <div class="empty-overlay">
+      <h1>Aguardando programação</h1>
+      <p>Nenhum conteúdo vinculado a este dispositivo ainda.</p>
+    </div>
+  </div>
+  <div class="code-badge" id="codeBadge">
+    <div class="label">Código do dispositivo</div>
+    <div class="code" id="codeBadgeText">MI-------</div>
+  </div>
+  <script>
+    // Mesma URL do backend usada no app Android.
+    var API_BASE = 'https://magic.vartec.com.br';
+    var POLL_INTERVAL_MS = 10000;
+    var TIMEOUT_MS = 8000;
+
+    var deviceCode = new URLSearchParams(location.search).get('code') || 'MI-------';
+
+    var waiting = document.getElementById('waiting');
+    var emptyState = document.getElementById('emptyState');
+    var img = document.getElementById('mediaImg');
+    var video = document.getElementById('mediaVideo');
+    var frame = document.getElementById('mediaFrame');
+    var stage = document.querySelector('.stage');
+    var currentOrientation = 'horizontal';
+    var pairCode = document.getElementById('pairCode');
+    var codeBadge = document.getElementById('codeBadge');
+    var codeBadgeText = document.getElementById('codeBadgeText');
+
+    pairCode.textContent = deviceCode;
+    codeBadgeText.textContent = deviceCode;
+
+    function applyOrientation(orientation) {
+      currentOrientation = orientation === 'vertical' ? 'vertical' : 'horizontal';
+      var screenIsPortrait = window.innerHeight > window.innerWidth;
+      stage.classList.toggle('rotated', (currentOrientation === 'vertical') !== screenIsPortrait);
+    }
+    window.addEventListener('resize', function () { applyOrientation(currentOrientation); });
+
+    var playlist = [];
+    var currentIndex = 0;
+    var timerId = null;
+
+    function applyRotation(el, rotation) {
+      el.classList.remove('rotate-90', 'rotate-180', 'rotate-270');
+      if (rotation === 90 || rotation === 180 || rotation === 270) el.classList.add('rotate-' + rotation);
+    }
+
+    function playCurrent() {
+      clearTimeout(timerId);
+      if (!playlist.length) return;
+      var item = playlist[currentIndex];
+      waiting.classList.add('hidden');
+      emptyState.classList.add('hidden');
+      codeBadge.classList.remove('visible');
+      applyOrientation(item.orientation);
+      var adaptavel = item.fitMode === 'adaptavel';
+      var seconds = item.duration > 0 ? item.duration : 8;
+      if (item.kind === 'video') {
+        img.style.display = 'none';
+        img.src = '';
+        stopFrame();
+        video.classList.toggle('fit-adaptavel', adaptavel);
+        applyRotation(video, item.rotation);
+        video.onended = advance;
+        video.src = item.url;
+        video.style.display = 'block';
+        video.play().catch(function () {});
+      } else if (item.kind === 'web') {
+        video.pause();
+        video.onended = null;
+        video.style.display = 'none';
+        video.src = '';
+        img.style.display = 'none';
+        img.src = '';
+        frame.src = item.url;
+        frame.style.display = 'block';
+        timerId = setTimeout(advance, seconds * 1000);
+      } else {
+        video.pause();
+        video.onended = null;
+        video.style.display = 'none';
+        video.src = '';
+        stopFrame();
+        img.classList.toggle('fit-adaptavel', adaptavel);
+        applyRotation(img, item.rotation);
+        img.src = item.url;
+        img.style.display = 'block';
+        timerId = setTimeout(advance, seconds * 1000);
+      }
+    }
+
+    function stopFrame() {
+      frame.style.display = 'none';
+      frame.src = 'about:blank';
+    }
+
+    function advance() {
+      currentIndex = (currentIndex + 1) % playlist.length;
+      playCurrent();
+    }
+
+    function showEmptyState() {
+      clearTimeout(timerId);
+      video.pause();
+      video.onended = null;
+      img.style.display = 'none';
+      video.style.display = 'none';
+      stopFrame();
+      waiting.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      codeBadge.classList.add('visible');
+    }
+
+    function updatePlaylist(newList) {
+      var sameIds = newList.length === playlist.length && newList.every(function (item, i) {
+        return item.id === playlist[i].id;
+      });
+      var wasIdle = !waiting.classList.contains('hidden') || !emptyState.classList.contains('hidden');
+      playlist = newList;
+      if (!playlist.length) {
+        showEmptyState();
+        return;
+      }
+      if (!sameIds || wasIdle) {
+        currentIndex = 0;
+        playCurrent();
+      }
+    }
+
+    function showWaiting() {
+      clearTimeout(timerId);
+      video.pause();
+      video.onended = null;
+      stopFrame();
+      emptyState.classList.add('hidden');
+      codeBadge.classList.remove('visible');
+      waiting.classList.remove('hidden');
+    }
+
+    // Consulta o backend a cada 10s — mesmo endpoint publico que o app Android usa,
+    // so que a busca e o polling rodam direto aqui no JS (sem ponte com codigo nativo).
+    function pollCampaigns() {
+      var controller = new AbortController();
+      var timeout = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
+      var url = API_BASE + '/api/devices/' + encodeURIComponent(deviceCode) + '/campaigns'
+        + '?screenWidth=' + window.screen.width
+        + '&screenHeight=' + window.screen.height
+        + '&screenDensity=desktop';
+
+      fetch(url, { signal: controller.signal })
+        .then(function (response) {
+          clearTimeout(timeout);
+          if (!response.ok) throw new Error('status ' + response.status);
+          return response.json();
+        })
+        .then(function (json) {
+          var items = Array.isArray(json.items) ? json.items : [];
+          var mapped = items.map(function (sourceItem) {
+            var kind = sourceItem.media_kind || 'imagem';
+            var url = kind === 'web'
+              ? (sourceItem.source_url || '')
+              : (API_BASE + '/uploads/' + (sourceItem.file_name || ''));
+            return {
+              id: sourceItem.id || '',
+              kind: kind,
+              url: url,
+              duration: sourceItem.duration_seconds || 8,
+              fitMode: sourceItem.fit_mode || 'original',
+              rotation: sourceItem.rotation || 0,
+              orientation: sourceItem.orientation || 'horizontal',
+            };
+          });
+          updatePlaylist(mapped);
+        })
+        .catch(function () {
+          clearTimeout(timeout);
+          showWaiting();
+        });
+    }
+
+    setTimeout(function () {
+      pollCampaigns();
+      setInterval(pollCampaigns, POLL_INTERVAL_MS);
+    }, 500);
+  </script>
+</body>
+</html>

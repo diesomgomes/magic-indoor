@@ -1,0 +1,37 @@
+{
+  "name": "magic-indoor-player",
+  "version": "1.0.0",
+  "description": "Magic Indoor Player para Windows — mesma funcao do app Android, em tela cheia.",
+  "main": "main.js",
+  "author": "Magic Indoor",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "br.com.vartec.magicindoor.player",
+    "productName": "Magic Indoor Player",
+    "asar": true,
+    "npmRebuild": false,
+    "files": [
+      "main.js",
+      "index.html",
+      "icon.ico"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

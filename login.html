@@ -51,6 +51,13 @@
 		.setup-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 22px; line-height: 1.6; }
 		.setup-note a { color: var(--accent-deep); font-weight: 700; text-decoration: none; }
 
+		.success-view { display: none; text-align: center; }
+		.success-view.visible { display: block; }
+		.success-icon { width: 56px; height: 56px; border-radius: 50%; background: #eaf6ee; color: #256a3e; display: grid; place-items: center; font-size: 26px; margin: 0 auto 20px; }
+		.success-view h1 { font-size: 22px; }
+		.success-view p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 28px; }
+		.success-view .primary { text-decoration: none; }
+
 		.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; animation: spin .7s linear infinite; display: none; }
 		.primary.loading .spinner { display: inline-block; }
 		.primary.loading .btn-label { opacity: .85; }
@@ -83,42 +90,51 @@
 			<div class="form-wrap">
 				<div class="brand"><div class="brand-mark">MI</div><span>Magic Indoor</span></div>
 
-				<h1 id="formTitle">Entrar</h1>
-				<p class="subtitle" id="formSubtitle">Não tem uma conta? <a href="#" id="toggleMode">Criar agora</a></p>
+				<div id="authView">
+					<h1 id="formTitle">Entrar</h1>
+					<p class="subtitle" id="formSubtitle">Não tem uma conta? <a href="#" id="toggleMode">Criar agora</a></p>
 
-				<div class="form-error" id="formError"></div>
-				<div class="form-note" id="formNote"></div>
+					<div class="form-error" id="formError"></div>
+					<div class="form-note" id="formNote"></div>
 
-				<form id="authForm">
-					<div class="field" id="fieldName" style="display:none">
-						<label for="name">Seu nome</label>
-						<input id="name" type="text" placeholder="Ex.: Amanda Ribeiro" autocomplete="name">
-					</div>
-					<div class="field" id="fieldEmail">
-						<label for="email">E-mail</label>
-						<input id="email" type="email" placeholder="voce@empresa.com" autocomplete="email" required>
-					</div>
-					<div class="field">
-						<label for="password" id="passwordLabel">Senha</label>
-						<div class="input-wrap">
-							<input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
-							<button type="button" class="toggle-visibility" id="togglePw">mostrar</button>
+					<form id="authForm">
+						<div class="field" id="fieldName" style="display:none">
+							<label for="name">Seu nome</label>
+							<input id="name" type="text" placeholder="Ex.: Amanda Ribeiro" autocomplete="name">
 						</div>
-					</div>
-					<div class="field" id="fieldConfirmPassword" style="display:none">
-						<label for="confirmPassword">Confirmar nova senha</label>
-						<input id="confirmPassword" type="password" placeholder="••••••••" autocomplete="new-password" minlength="6">
-					</div>
-					<div class="row-between" id="rowBetween">
-						<label class="remember"><input type="checkbox" id="remember"> Lembrar de mim</label>
-						<a href="#" id="forgotLink">Esqueceu a senha?</a>
-					</div>
-					<button type="submit" class="primary" id="submitBtn">
-						<span class="spinner"></span><span class="btn-label">Entrar</span>
-					</button>
-				</form>
+						<div class="field" id="fieldEmail">
+							<label for="email">E-mail</label>
+							<input id="email" type="email" placeholder="voce@empresa.com" autocomplete="email" required>
+						</div>
+						<div class="field">
+							<label for="password" id="passwordLabel">Senha</label>
+							<div class="input-wrap">
+								<input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+								<button type="button" class="toggle-visibility" id="togglePw">mostrar</button>
+							</div>
+						</div>
+						<div class="field" id="fieldConfirmPassword" style="display:none">
+							<label for="confirmPassword">Confirmar nova senha</label>
+							<input id="confirmPassword" type="password" placeholder="••••••••" autocomplete="new-password" minlength="6">
+						</div>
+						<div class="row-between" id="rowBetween">
+							<label class="remember"><input type="checkbox" id="remember"> Lembrar de mim</label>
+							<a href="#" id="forgotLink">Esqueceu a senha?</a>
+						</div>
+						<button type="submit" class="primary" id="submitBtn">
+							<span class="spinner"></span><span class="btn-label">Entrar</span>
+						</button>
+					</form>
 
-				<p class="setup-note" id="setupNote"></p>
+					<p class="setup-note" id="setupNote"></p>
+				</div>
+
+				<div class="success-view" id="successView">
+					<div class="success-icon">✓</div>
+					<h1>Conta criada!</h1>
+					<p id="successMessage">Enviamos um e-mail de confirmação pra você. Abre a caixa de entrada, confirma o cadastro e depois volta aqui pra entrar.</p>
+					<a href="#" class="primary" id="backToLogin">Voltar para o login</a>
+				</div>
 			</div>
 		</section>
 
@@ -165,6 +181,22 @@
 		const fieldConfirmPassword = document.getElementById('fieldConfirmPassword');
 		const rowBetween = document.getElementById('rowBetween');
 		const passwordLabel = document.getElementById('passwordLabel');
+		const authView = document.getElementById('authView');
+		const successView = document.getElementById('successView');
+
+		function showSuccessView(email) {
+			document.getElementById('successMessage').textContent =
+				`Enviamos um e-mail de confirmação para ${email}. Abre a caixa de entrada, confirma o cadastro e depois volta aqui pra entrar.`;
+			authView.style.display = 'none';
+			successView.classList.add('visible');
+		}
+		document.getElementById('backToLogin').addEventListener('click', e => {
+			e.preventDefault();
+			successView.classList.remove('visible');
+			authView.style.display = '';
+			document.getElementById('authForm').reset();
+			setMode('signin');
+		});
 
 		function setMode(next) {
 			mode = next;
@@ -246,8 +278,7 @@
 					const name = document.getElementById('name').value.trim();
 					const { error } = await authClient.auth.signUp({ email, password, options: { data: { full_name: name } } });
 					if (error) throw error;
-					showNote('Conta criada! Verifique seu e-mail para confirmar antes de entrar.');
-					setMode('signin');
+					showSuccessView(email);
 				}
 			} catch (err) {
 				showError(err.message || 'Não foi possível concluir. Tente novamente.');

@@ -32,9 +32,7 @@ import java.util.concurrent.Executors;
 public class MainActivity extends Activity {
     private static final String TAG = "MagicindorPlayer";
 
-    // IP local da máquina rodando o backend na rede Wi-Fi, para teste com celular físico.
-    // Quando migrar para a VPS, troque para a URL pública do servidor (ex.: https://api.seudominio.com).
-    private static final String API_BASE = "http://192.168.77.177:3000";
+    private static final String API_BASE = "https://magic.vartec.com.br";
     private static final long POLL_INTERVAL_MS = 10_000;
     private static final int TIMEOUT_MS = 6_000;
 

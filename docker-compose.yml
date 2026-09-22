@@ -22,6 +22,10 @@ services:
       # bind mount para os uploads sobreviverem a rebuilds/restarts do container
       # e ficarem faceis de fazer backup direto no host
       - ./backend/uploads:/app/backend/uploads
+      # APK do player: o projeto Android nao entra na imagem (.dockerignore exclui
+      # app/, e nao ha SDK/Gradle no build). Manda o .apk pra este caminho na VPS
+      # (scp) e o botao "Baixar APK" do painel ja serve direto daqui.
+      - ./app/build/outputs/apk/debug:/app/app/build/outputs/apk/debug
     networks:
       - default
       - proxy

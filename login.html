@@ -90,18 +90,26 @@
 				<div class="form-note" id="formNote"></div>
 
 				<form id="authForm">
-					<div class="field">
+					<div class="field" id="fieldName" style="display:none">
+						<label for="name">Seu nome</label>
+						<input id="name" type="text" placeholder="Ex.: Amanda Ribeiro" autocomplete="name">
+					</div>
+					<div class="field" id="fieldEmail">
 						<label for="email">E-mail</label>
 						<input id="email" type="email" placeholder="voce@empresa.com" autocomplete="email" required>
 					</div>
 					<div class="field">
-						<label for="password">Senha</label>
+						<label for="password" id="passwordLabel">Senha</label>
 						<div class="input-wrap">
 							<input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
 							<button type="button" class="toggle-visibility" id="togglePw">mostrar</button>
 						</div>
 					</div>
-					<div class="row-between">
+					<div class="field" id="fieldConfirmPassword" style="display:none">
+						<label for="confirmPassword">Confirmar nova senha</label>
+						<input id="confirmPassword" type="password" placeholder="••••••••" autocomplete="new-password" minlength="6">
+					</div>
+					<div class="row-between" id="rowBetween">
 						<label class="remember"><input type="checkbox" id="remember"> Lembrar de mim</label>
 						<a href="#" id="forgotLink">Esqueceu a senha?</a>
 					</div>
@@ -142,9 +150,7 @@
 		const authClient = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 		const setupNote = document.getElementById('setupNote');
-		setupNote.innerHTML = configured
-			? 'Conectado à sua base Supabase.'
-			: 'Não foi possível conectar ao servidor. Tente novamente em instantes.';
+		if (!configured) setupNote.textContent = 'Não foi possível conectar ao servidor. Tente novamente em instantes.';
 
 		let mode = 'signin';
 		const formTitle = document.getElementById('formTitle');
@@ -154,16 +160,37 @@
 		const btnLabel = submitBtn.querySelector('.btn-label');
 		const formError = document.getElementById('formError');
 		const formNote = document.getElementById('formNote');
+		const fieldName = document.getElementById('fieldName');
+		const fieldEmail = document.getElementById('fieldEmail');
+		const fieldConfirmPassword = document.getElementById('fieldConfirmPassword');
+		const rowBetween = document.getElementById('rowBetween');
+		const passwordLabel = document.getElementById('passwordLabel');
 
 		function setMode(next) {
 			mode = next;
 			const signIn = mode === 'signin';
-			formTitle.textContent = signIn ? 'Entrar' : 'Criar conta';
-			formSubtitle.innerHTML = signIn
-				? 'Não tem uma conta? <a href="#" id="toggleMode">Criar agora</a>'
-				: 'Já tem uma conta? <a href="#" id="toggleMode">Entrar</a>';
-			btnLabel.textContent = signIn ? 'Entrar' : 'Criar conta';
-			document.getElementById('toggleMode').addEventListener('click', e => { e.preventDefault(); setMode(signIn ? 'signup' : 'signin'); });
+			const signUp = mode === 'signup';
+			const reset = mode === 'reset';
+
+			formTitle.textContent = signIn ? 'Entrar' : signUp ? 'Criar conta' : 'Defina sua nova senha';
+			formSubtitle.innerHTML = reset
+				? 'Escolha uma nova senha para sua conta.'
+				: signIn
+					? 'Não tem uma conta? <a href="#" id="toggleMode">Criar agora</a>'
+					: 'Já tem uma conta? <a href="#" id="toggleMode">Entrar</a>';
+			btnLabel.textContent = signIn ? 'Entrar' : signUp ? 'Criar conta' : 'Salvar nova senha';
+			fieldName.style.display = signUp ? '' : 'none';
+			fieldEmail.style.display = reset ? 'none' : '';
+			document.getElementById('email').required = !reset;
+			fieldConfirmPassword.style.display = reset ? '' : 'none';
+			document.getElementById('confirmPassword').required = reset;
+			rowBetween.style.display = reset ? 'none' : '';
+			passwordLabel.textContent = reset ? 'Nova senha' : 'Senha';
+			document.getElementById('password').placeholder = reset ? 'Mínimo 6 caracteres' : '••••••••';
+			if (!reset) {
+				const toggle = document.getElementById('toggleMode');
+				if (toggle) toggle.addEventListener('click', e => { e.preventDefault(); setMode(signIn ? 'signup' : 'signin'); });
+			}
 			formError.classList.remove('visible');
 			formNote.classList.remove('visible');
 		}
@@ -179,12 +206,12 @@
 
 		document.getElementById('forgotLink').addEventListener('click', async e => {
 			e.preventDefault();
-			if (!configured) { showError('Configure o Supabase antes de recuperar a senha.'); return; }
+			if (!configured) { showError('Não foi possível conectar ao servidor.'); return; }
 			const email = document.getElementById('email').value.trim();
 			if (!email) { showError('Informe seu e-mail para receber o link de recuperação.'); return; }
-			const { error } = await authClient.auth.resetPasswordForEmail(email);
+			const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/login' });
 			if (error) showError(error.message);
-			else showNote('Enviamos um link de recuperação para ' + email + '.');
+			else showNote('Enviamos um link de recuperação para ' + email + '. Abra o e-mail e clique no link para definir uma nova senha.');
 		});
 
 		function showError(message) { formError.textContent = message; formError.classList.add('visible'); formNote.classList.remove('visible'); }
@@ -197,18 +224,27 @@
 
 		document.getElementById('authForm').addEventListener('submit', async e => {
 			e.preventDefault();
-			if (!configured) { showError('Configure a URL e a chave do Supabase em Configurações antes de entrar.'); return; }
-			const email = document.getElementById('email').value.trim();
+			if (!configured) { showError('Não foi possível conectar ao servidor.'); return; }
 			const password = document.getElementById('password').value;
 			formError.classList.remove('visible');
 			setLoading(true);
 			try {
+				if (mode === 'reset') {
+					const confirmPassword = document.getElementById('confirmPassword').value;
+					if (password !== confirmPassword) throw new Error('As senhas não coincidem.');
+					const { error } = await authClient.auth.updateUser({ password });
+					if (error) throw error;
+					window.location.href = '/';
+					return;
+				}
+				const email = document.getElementById('email').value.trim();
 				if (mode === 'signin') {
 					const { error } = await authClient.auth.signInWithPassword({ email, password });
 					if (error) throw error;
 					window.location.href = '/';
 				} else {
-					const { error } = await authClient.auth.signUp({ email, password });
+					const name = document.getElementById('name').value.trim();
+					const { error } = await authClient.auth.signUp({ email, password, options: { data: { full_name: name } } });
 					if (error) throw error;
 					showNote('Conta criada! Verifique seu e-mail para confirmar antes de entrar.');
 					setMode('signin');
@@ -220,8 +256,14 @@
 			}
 		});
 
-		// Se já existe sessão válida, pula direto para o painel.
-		if (configured) {
+		// O link do e-mail de recuperação abre esta pagina ja autenticado numa sessao
+		// temporaria de recuperacao; troca o formulario para pedir a nova senha.
+		authClient.auth.onAuthStateChange((event) => {
+			if (event === 'PASSWORD_RECOVERY') setMode('reset');
+		});
+
+		// Se já existe sessão válida (e não é um link de recuperação), pula direto pro painel.
+		if (configured && !window.location.hash.includes('type=recovery')) {
 			authClient.auth.getSession().then(({ data }) => { if (data.session) window.location.href = '/'; });
 		}
 	}

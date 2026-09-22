@@ -592,7 +592,7 @@
 				const response = await apiFetch(`${API_BASE}/api/campaigns/${campaignId}/assign`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ deviceId: Number(deviceId) }),
+					body: JSON.stringify({ deviceId }),
 				});
 				if (!response.ok) throw new Error();
 				loadCampaigns();

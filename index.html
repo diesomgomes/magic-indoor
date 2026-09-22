@@ -1441,12 +1441,22 @@
 		});
 		// Mostra o nome de verdade da pessoa logada (saudação + barra lateral), com um
 		// fallback razoável enquanto ela ainda não preencheu o nome no onboarding.
+		function greetingWord() {
+			const now = new Date();
+			// minutos desde meia-noite; 00:00 conta como fim da madrugada (1440), nao inicio do dia.
+			let minutes = now.getHours() * 60 + now.getMinutes();
+			if (minutes === 0) minutes = 24 * 60;
+			if (minutes <= 12 * 60) return 'Bom dia';
+			if (minutes <= 18 * 60) return 'Boa tarde';
+			return 'Boa noite';
+		}
+
 		function updateAccountDisplay(user) {
 			const fullName = (user.user_metadata && user.user_metadata.full_name) || '';
 			const email = user.email || '';
 			const displayName = fullName || email.split('@')[0] || 'você';
 			const firstName = displayName.split(' ')[0];
-			document.getElementById('greeting').textContent = `Bom dia, ${firstName}.`;
+			document.getElementById('greeting').textContent = `${greetingWord()}, ${firstName}.`;
 			document.getElementById('accountName').textContent = displayName;
 			document.getElementById('accountEmail').textContent = email;
 			document.getElementById('accountAvatar').textContent = displayName.slice(0, 2).toUpperCase();

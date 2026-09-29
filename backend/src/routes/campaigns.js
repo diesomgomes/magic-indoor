@@ -42,6 +42,25 @@ function isHttpUrl(value) {
     return false;
   }
 }
+
+// Aceita qualquer formato de link do YouTube (watch, youtu.be, shorts, embed) e devolve
+// o id do video, ou null se nao for um link do YouTube — usado pra montar a URL de embed
+// que realmente toca dentro de um iframe (a URL de "assistir" normal nao permite isso).
+function extractYoutubeId(rawUrl) {
+  let url;
+  try { url = new URL(rawUrl); } catch { return null; }
+  const host = url.hostname.replace(/^www\./, '');
+  if (host === 'youtu.be') return url.pathname.slice(1).split('/')[0] || null;
+  if (host !== 'youtube.com' && host !== 'm.youtube.com' && host !== 'youtube-nocookie.com') return null;
+  if (url.pathname === '/watch') return url.searchParams.get('v');
+  const match = url.pathname.match(/^\/(?:embed|shorts|live)\/([^/?]+)/);
+  return match ? match[1] : null;
+}
+function toEmbeddableUrl(rawUrl) {
+  const videoId = extractYoutubeId(rawUrl);
+  if (!videoId) return rawUrl;
+  return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&loop=1&playlist=${videoId}`;
+}
 function handleError(res, error, status = 500) {
   console.error(error);
   res.status(status).json({ error: error.message || 'Erro interno.' });
@@ -98,8 +117,9 @@ async function parseBody(supabase, body) {
         news_count: null,
       });
     } else if (raw && raw.type === 'tool' && URL_KINDS.includes(raw.kind)) {
-      const url = typeof raw.url === 'string' ? raw.url.trim() : '';
-      if (!isHttpUrl(url)) return { error: 'Informe um endereco valido (http:// ou https://) em todos os itens de ferramenta.' };
+      const rawUrl = typeof raw.url === 'string' ? raw.url.trim() : '';
+      if (!isHttpUrl(rawUrl)) return { error: 'Informe um endereco valido (http:// ou https://) em todos os itens de ferramenta.' };
+      const url = raw.kind === 'web' ? toEmbeddableUrl(rawUrl) : rawUrl;
       const integration = typeof raw.integration === 'string' ? raw.integration.trim().slice(0, 60) || null : null;
       parsed.push({
         media_id: null,

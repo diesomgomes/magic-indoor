@@ -868,6 +868,7 @@
 			entretenimentos: [
 				{ kind: 'noticias', integration: 'Notícias', label: 'Notícias (RSS)', icon: '≡', color: '#a94438', placeholder: 'https://exemplo.com/feed.xml', hint: 'Endereço do feed RSS do portal de notícias.' },
 				{ kind: 'web', integration: 'YouTube', label: 'Vídeo do YouTube', icon: '▶', color: '#d33a2c', placeholder: 'https://www.youtube.com/watch?v=...', hint: 'Cole o link do vídeo (funciona com qualquer formato: youtube.com, youtu.be, shorts). Toca sem som e em loop.' },
+				{ kind: 'musica', integration: 'Last.fm', label: 'Trilha sonora (tocando agora)', icon: '♪', color: '#c8433c', placeholder: 'seu-usuario-lastfm', hint: 'Digite seu usuário do Last.fm (last.fm) — mostra capa, música e artista tocando agora. Funciona com qualquer app conectado ao Last.fm (Spotify, YouTube Music, Amazon Music, rádio...). A TV só exibe a informação; quem toca o áudio é o serviço/equipamento de som do local.' },
 			],
 			ferramentas: [
 				{ kind: 'web', integration: 'Dashboard BI', label: 'Dashboard BI (Looker Studio)', icon: '▦', color: '#c99a2e', placeholder: 'https://lookerstudio.google.com/embed/reporting/...', hint: 'Use o link de incorporação do relatório.' },
@@ -1178,7 +1179,10 @@
 			if (!name) return showEditorError('Informe o nome da programação.');
 			if (!editor.items.length) return showEditorError('Adicione ao menos um item à lista final.');
 			for (const [index, item] of editor.items.entries()) {
-				if (item.type === 'tool' && !/^https?:\/\/\S+$/i.test((item.url || '').trim())) {
+				if (item.type !== 'tool') continue;
+				if (item.kind === 'musica') {
+					if (!(item.url || '').trim()) return showEditorError(`Preencha o usuário do Last.fm no item ${index + 1}: ${item.title}.`);
+				} else if (!/^https?:\/\/\S+$/i.test((item.url || '').trim())) {
 					return showEditorError(`Preencha um endereço válido (http:// ou https://) no item ${index + 1}: ${item.title}.`);
 				}
 			}

@@ -9,6 +9,7 @@ const devicesRouter = require('./routes/devices');
 const campaignsRouter = require('./routes/campaigns');
 const eventsRouter = require('./routes/events');
 const newsRouter = require('./routes/news');
+const musicRouter = require('./routes/music');
 const mediaRouter = require('./routes/media');
 const companyRouter = require('./routes/company');
 
@@ -38,6 +39,7 @@ app.use('/api/devices', devicesRouter);
 app.use('/api/campaigns', campaignsRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/news', newsRouter);
+app.use('/api/music', musicRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/company', companyRouter);
 

@@ -132,12 +132,16 @@ router.get('/:code/campaigns', async (req, res) => {
     }
   }
 
-  // Noticias viram uma pagina web servida por este proprio backend (no endereco pelo qual o
-  // aparelho nos alcancou), ja com a quantidade de manchetes escolhida; o player so exibe a URL.
+  // Noticias e trilha sonora viram paginas web servidas por este proprio backend (no
+  // endereco pelo qual o aparelho nos alcancou); o player so exibe a URL, igual a
+  // qualquer outro item "web".
   const baseUrl = `${req.protocol}://${req.get('host')}`;
   for (const item of flattened) {
     if (item.media_kind === 'noticias') {
       item.source_url = `${baseUrl}/api/news/view?url=${encodeURIComponent(item.source_url)}&count=${item.news_count || 5}`;
+      item.media_kind = 'web';
+    } else if (item.media_kind === 'musica') {
+      item.source_url = `${baseUrl}/api/music/view?user=${encodeURIComponent(item.source_url)}`;
       item.media_kind = 'web';
     }
   }

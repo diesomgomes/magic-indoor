@@ -4,7 +4,7 @@ const { logEvent } = require('../events');
 
 const router = express.Router();
 
-const URL_KINDS = ['web', 'noticias'];
+const URL_KINDS = ['web', 'noticias', 'musica'];
 const FIT_MODES = ['original', 'adaptavel'];
 const ORIENTATIONS = ['horizontal', 'vertical'];
 const DEFAULT_DURATION = 8;
@@ -118,8 +118,15 @@ async function parseBody(supabase, body) {
       });
     } else if (raw && raw.type === 'tool' && URL_KINDS.includes(raw.kind)) {
       const rawUrl = typeof raw.url === 'string' ? raw.url.trim() : '';
-      if (!isHttpUrl(rawUrl)) return { error: 'Informe um endereco valido (http:// ou https://) em todos os itens de ferramenta.' };
-      const url = raw.kind === 'web' ? toEmbeddableUrl(rawUrl) : rawUrl;
+      let url;
+      if (raw.kind === 'musica') {
+        // Aqui "url" e o nome de usuario do Last.fm, nao um endereco http.
+        if (!rawUrl || rawUrl.length > 60) return { error: 'Informe o usuario do Last.fm em todos os itens de trilha sonora.' };
+        url = rawUrl;
+      } else {
+        if (!isHttpUrl(rawUrl)) return { error: 'Informe um endereco valido (http:// ou https://) em todos os itens de ferramenta.' };
+        url = raw.kind === 'web' ? toEmbeddableUrl(rawUrl) : rawUrl;
+      }
       const integration = typeof raw.integration === 'string' ? raw.integration.trim().slice(0, 60) || null : null;
       parsed.push({
         media_id: null,

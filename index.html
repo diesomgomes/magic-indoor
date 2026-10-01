@@ -398,6 +398,17 @@
 
 	<div class="modal-backdrop" id="linkModal"><div class="modal"><h2>Vincular dispositivo</h2><p>Digite o código exibido na tela do dispositivo e dê um nome para identificá-lo.</p><div class="field"><label for="linkDeviceName">Nome do dispositivo</label><input id="linkDeviceName" placeholder="Ex.: TV Recepção · 01"></div><div class="field"><label for="linkDeviceCode">Código do dispositivo</label><input id="linkDeviceCode" placeholder="MI-XXXXXX" style="text-transform:uppercase"></div><div class="file-error" id="linkError">Preencha o nome e um código válido (MI-XXXXXX).</div><div class="modal-actions"><button class="secondary" id="closeLinkModal">Cancelar</button><button class="primary" id="saveLinkDevice">Vincular</button></div></div></div>
 	<div class="modal-backdrop" id="onboardingModal"><div class="modal"><h2>Bem-vindo(a) ao Magic Indoor!</h2><p>Antes de continuar, conta pra gente seu nome e os dados da empresa — aparecem no painel e nos dispositivos.</p><div class="field"><label for="onboardingName">Seu nome</label><input id="onboardingName" placeholder="Ex.: Amanda Ribeiro"></div><div class="field"><label for="onboardingRazaoSocial">Nome da empresa / Razão social</label><input id="onboardingRazaoSocial" placeholder="Ex.: Magic Indoor Mídia Ltda."></div><div class="field"><label for="onboardingCnpj">CNPJ (opcional)</label><input id="onboardingCnpj" placeholder="00.000.000/0000-00"></div><div class="field"><label for="onboardingEndereco">Endereço (opcional)</label><input id="onboardingEndereco" placeholder="Rua, número, cidade — UF"></div><div class="file-error" id="onboardingError">Preencha seu nome e o nome da empresa.</div><div class="modal-actions"><button class="secondary" id="skipOnboarding">Preencher depois</button><button class="primary" id="saveOnboarding">Salvar e continuar</button></div></div></div>
+	<div class="modal-backdrop" id="musicHelpModal"><div class="modal">
+		<h2>Conectar sua trilha sonora</h2>
+		<p>Essa integração é pessoal — fica ligada à sua conta do Last.fm, não à conta do Magic Indoor. Leva menos de 2 minutos:</p>
+		<ol style="margin: 0 0 18px; padding-left: 20px; font-size: 13px; line-height: 1.8; color: var(--muted)">
+			<li>Crie uma conta grátis em <a href="https://www.last.fm/join" target="_blank" rel="noopener">last.fm/join</a> (se ainda não tiver).</li>
+			<li>Conecte o app que você usa pra tocar música a essa conta — o Spotify já tem integração pronta: <a href="https://www.spotify.com/account/apps" target="_blank" rel="noopener">spotify.com/account/apps</a> → procure <strong>Last.fm</strong> → <strong>Conectar</strong>. (YouTube Music, Apple Music e outros também conectam, cada um no próprio app.)</li>
+			<li>Volte aqui e digite seu <strong>nome de usuário do Last.fm</strong> (não é e-mail nem senha) no campo desta ferramenta.</li>
+		</ol>
+		<p class="settings-note" style="margin-bottom: 18px">A partir daí, toda música que você tocar aparece na tela automaticamente — capa, música e artista — sem precisar fazer mais nada.</p>
+		<div class="modal-actions"><button class="primary" id="closeMusicHelpModal">Entendi</button></div>
+	</div></div>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 	<script>
 		function readSetting(key, fallback) {
@@ -445,6 +456,10 @@
 		document.getElementById('linkDevice').addEventListener('click', () => linkModal.classList.add('open'));
 		document.getElementById('closeLinkModal').addEventListener('click', closeLinkModal);
 		linkModal.addEventListener('click', event => { if (event.target === linkModal) closeLinkModal(); });
+
+		const musicHelpModal = document.getElementById('musicHelpModal');
+		document.getElementById('closeMusicHelpModal').addEventListener('click', () => musicHelpModal.classList.remove('open'));
+		musicHelpModal.addEventListener('click', event => { if (event.target === musicHelpModal) musicHelpModal.classList.remove('open'); });
 
 		function closeLinkModal() {
 			linkModal.classList.remove('open');
@@ -868,7 +883,7 @@
 			entretenimentos: [
 				{ kind: 'noticias', integration: 'Notícias', label: 'Notícias (RSS)', icon: '≡', color: '#a94438', placeholder: 'https://exemplo.com/feed.xml', hint: 'Endereço do feed RSS do portal de notícias.' },
 				{ kind: 'web', integration: 'YouTube', label: 'Vídeo do YouTube', icon: '▶', color: '#d33a2c', placeholder: 'https://www.youtube.com/watch?v=...', hint: 'Cole o link do vídeo (funciona com qualquer formato: youtube.com, youtu.be, shorts). Toca sem som e em loop.' },
-				{ kind: 'musica', integration: 'Last.fm', label: 'Trilha sonora (tocando agora)', icon: '♪', color: '#c8433c', placeholder: 'seu-usuario-lastfm', hint: 'Digite seu usuário do Last.fm (last.fm) — mostra capa, música e artista tocando agora. Funciona com qualquer app conectado ao Last.fm (Spotify, YouTube Music, Amazon Music, rádio...). A TV só exibe a informação; quem toca o áudio é o serviço/equipamento de som do local.' },
+				{ kind: 'musica', integration: 'Last.fm', label: 'Trilha sonora (tocando agora)', icon: '♪', color: '#c8433c', placeholder: 'seu-usuario-lastfm', hint: 'Mostra capa, música e artista tocando agora no Spotify, YouTube Music etc. Conexão pessoal — depois de adicionar, clique em "Como conectar?".' },
 			],
 			ferramentas: [
 				{ kind: 'web', integration: 'Dashboard BI', label: 'Dashboard BI (Looker Studio)', icon: '▦', color: '#c99a2e', placeholder: 'https://lookerstudio.google.com/embed/reporting/...', hint: 'Use o link de incorporação do relatório.' },
@@ -1086,7 +1101,8 @@
 				<select class="sub-select fit" title="Como exibir na tela"><option value="original">Original</option><option value="adaptavel">Adaptável</option></select>
 				<select class="sub-select rotate" title="Girar o conteúdo" hidden><option value="0">Sem giro</option><option value="90">90°</option><option value="180">180° (de cabeça p/ baixo)</option><option value="270">270°</option></select>
 				<button type="button" class="icon-btn danger rm" title="Remover da lista">×</button>
-				<input class="url-input" type="url" hidden>`;
+				<input class="url-input" type="url" hidden>
+				<button type="button" class="view-link music-help" style="flex: 0 0 auto;" hidden>Como conectar?</button>`;
 
 			const visual = row.querySelector('.visual');
 			const isMedia = item.type === 'media';
@@ -1139,7 +1155,12 @@
 				urlInput.placeholder = template ? template.placeholder : 'https://...';
 				urlInput.value = item.url;
 				urlInput.addEventListener('input', () => { item.url = urlInput.value; });
+				if (item.kind === 'musica') urlInput.placeholder = 'Seu usuário do Last.fm';
 			}
+
+			const musicHelp = row.querySelector('.music-help');
+			musicHelp.hidden = isMedia || item.kind !== 'musica';
+			musicHelp.addEventListener('click', () => document.getElementById('musicHelpModal').classList.add('open'));
 
 			row.querySelector('.rm').addEventListener('click', () => {
 				editor.items = editor.items.filter(i => i.uid !== item.uid);

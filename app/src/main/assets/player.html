@@ -142,7 +142,7 @@
     var ytPendingVideoId = null;
     window.onYouTubeIframeAPIReady = function () {
       ytApiReady = true;
-      if (ytPendingVideoId) { var id = ytPendingVideoId; ytPendingVideoId = null; playYoutube(id); }
+      if (ytPendingVideoId) { var id = ytPendingVideoId; ytPendingVideoId = null; playYoutube(id, ytPendingMuted); }
     };
     (function loadYoutubeApi() {
       var tag = document.createElement('script');
@@ -158,12 +158,20 @@
       return match ? match[1] : null;
     }
 
-    function playYoutube(videoId) {
-      if (!ytApiReady) { ytPendingVideoId = videoId; return; }
+    var ytPendingMuted = true;
+
+    function applyYtSound(player, muted) {
+      try { muted ? player.mute() : player.unMute(); } catch (e) {}
+    }
+
+    function playYoutube(videoId, muted) {
+      if (!ytApiReady) { ytPendingVideoId = videoId; ytPendingMuted = muted; return; }
       if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(videoId);
+        applyYtSound(ytPlayer, muted);
         return;
       }
+      ytPendingMuted = muted;
       ytPlayer = new YT.Player('ytPlayerEl', {
         videoId: videoId,
         playerVars: { autoplay: 1, mute: 1, controls: 0, modestbranding: 1, rel: 0, playsinline: 1 },
@@ -173,6 +181,7 @@
             el.style.width = '100%';
             el.style.height = '100%';
             el.style.display = 'block';
+            applyYtSound(e.target, ytPendingMuted);
           },
           onStateChange: function (e) {
             if (e.data === YT.PlayerState.ENDED) advance();
@@ -204,6 +213,7 @@
         stopYoutube();
         video.classList.toggle('fit-adaptavel', adaptavel);
         applyRotation(video, item.rotation);
+        video.muted = item.muted !== false;
         video.onended = advance;
         video.src = item.url;
         video.style.display = 'block';
@@ -218,7 +228,7 @@
         stopFrame();
         applyRotation(ytWrapper, item.rotation);
         ytWrapper.style.display = 'block';
-        playYoutube(youtubeId);
+        playYoutube(youtubeId, item.muted !== false);
         // Sem cronometro: so avanca quando o YouTube avisar (onStateChange ENDED).
       } else if (item.kind === 'web') {
         video.pause();

@@ -55,6 +55,9 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      // Sem isso, video/audio marcado "com som" na programacao nao toca sozinho —
+      // o Chromium bloqueia autoplay com audio sem interacao do usuario por padrao.
+      autoplayPolicy: 'no-user-gesture-required',
     },
   });
 

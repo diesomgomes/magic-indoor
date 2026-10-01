@@ -163,6 +163,7 @@ public class MainActivity extends Activity {
                 item.put("duration", sourceItem.optInt("duration_seconds", 8));
                 item.put("fitMode", sourceItem.optString("fit_mode", "original"));
                 item.put("rotation", sourceItem.optInt("rotation", 0));
+                item.put("muted", sourceItem.optBoolean("muted", true));
                 item.put("orientation", sourceItem.optString("orientation", "horizontal"));
                 playlist.put(item);
             }

@@ -34,6 +34,10 @@ function parseNewsCount(raw) {
   if (Number.isNaN(value)) return DEFAULT_NEWS_COUNT;
   return Math.min(MAX_NEWS_COUNT, Math.max(1, value));
 }
+// Padrao mudo (como sempre foi) a menos que a pessoa explicitamente marque "com som".
+function parseMuted(raw) {
+  return raw === false || raw === 'false' ? false : true;
+}
 function isHttpUrl(value) {
   try {
     const url = new URL(value);
@@ -115,6 +119,8 @@ async function parseBody(supabase, body) {
         duration_seconds: duration,
         fit_mode: fitMode,
         rotation,
+        // Som so faz sentido em video; imagem/gif nao tem audio, fica sempre mudo.
+        muted: media.media_kind === 'video' ? parseMuted(raw.muted) : true,
         source_url: null,
         integration: null,
         news_count: null,
@@ -134,7 +140,8 @@ async function parseBody(supabase, body) {
       // Giro em itens de ferramenta so faz sentido pro YouTube (um video pode vir
       // gravado na vertical, ou a TV estar montada de lado) — dashboards/noticias
       // ja se adaptam ao proprio layout, entao ignoramos rotation pra eles.
-      const toolRotation = raw.kind === 'web' && integration === 'YouTube' ? parseRotation(raw.rotation) : 0;
+      const isYoutube = raw.kind === 'web' && integration === 'YouTube';
+      const toolRotation = isYoutube ? parseRotation(raw.rotation) : 0;
       parsed.push({
         media_id: null,
         file_name: '',
@@ -144,6 +151,7 @@ async function parseBody(supabase, body) {
         duration_seconds: duration,
         fit_mode: fitMode,
         rotation: toolRotation,
+        muted: isYoutube ? parseMuted(raw.muted) : true,
         source_url: url,
         integration,
         news_count: raw.kind === 'noticias' ? parseNewsCount(raw.news_count) : null,

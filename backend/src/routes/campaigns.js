@@ -59,7 +59,10 @@ function extractYoutubeId(rawUrl) {
 function toEmbeddableUrl(rawUrl) {
   const videoId = extractYoutubeId(rawUrl);
   if (!videoId) return rawUrl;
-  return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&loop=1&playlist=${videoId}`;
+  // Sem loop/playlist de proposito: o player escuta o fim de verdade do video (API do
+  // YouTube, enablejsapi=1) pra so entao passar pro proximo item — looping infinito
+  // nunca dispararia esse evento.
+  return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
 }
 function handleError(res, error, status = 500) {
   console.error(error);

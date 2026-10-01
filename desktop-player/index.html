@@ -53,6 +53,7 @@
     <img id="mediaImg" class="media-fill" alt="">
     <video id="mediaVideo" class="media-fill" autoplay muted playsinline></video>
     <iframe id="mediaFrame" class="media-fill" style="border:0;background:#000" allow="autoplay; fullscreen"></iframe>
+    <div id="ytWrapper" class="media-fill"><div id="ytPlayerEl"></div></div>
   </div>
   <div class="waiting" id="waiting">
     <div class="spinner"></div>
@@ -109,6 +110,7 @@
     var img = document.getElementById('mediaImg');
     var video = document.getElementById('mediaVideo');
     var frame = document.getElementById('mediaFrame');
+    var ytWrapper = document.getElementById('ytWrapper');
     var stage = document.querySelector('.stage');
     var currentOrientation = 'horizontal';
     var pairCode = document.getElementById('pairCode');
@@ -134,6 +136,58 @@
       if (rotation === 90 || rotation === 180 || rotation === 270) el.classList.add('rotate-' + rotation);
     }
 
+    // Player de video do YouTube: usa a API oficial (nao um <iframe> solto) pra saber de
+    // verdade quando o video termina e so entao avancar pro proximo item — sem isso so
+    // teriamos o cronometro fixo configurado na programacao, cortando o video no meio.
+    var ytApiReady = false;
+    var ytPlayer = null;
+    var ytPendingVideoId = null;
+    window.onYouTubeIframeAPIReady = function () {
+      ytApiReady = true;
+      if (ytPendingVideoId) { var id = ytPendingVideoId; ytPendingVideoId = null; playYoutube(id); }
+    };
+    (function loadYoutubeApi() {
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    })();
+
+    function extractYoutubeVideoId(url) {
+      // So reconhece de verdade um embed do YouTube (nocookie ou nao) — varios outros
+      // servicos (ex.: Looker Studio) tambem usam "/embed/" na URL e nao podem cair aqui.
+      if (!/^https:\/\/(www\.)?(youtube(-nocookie)?\.com)\//.test(url)) return null;
+      var match = url.match(/\/embed\/([^?&/]+)/);
+      return match ? match[1] : null;
+    }
+
+    function playYoutube(videoId) {
+      if (!ytApiReady) { ytPendingVideoId = videoId; return; }
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+        return;
+      }
+      ytPlayer = new YT.Player('ytPlayerEl', {
+        videoId: videoId,
+        playerVars: { autoplay: 1, mute: 1, controls: 0, modestbranding: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: function (e) {
+            var el = e.target.getIframe();
+            el.style.width = '100%';
+            el.style.height = '100%';
+            el.style.display = 'block';
+          },
+          onStateChange: function (e) {
+            if (e.data === YT.PlayerState.ENDED) advance();
+          },
+        },
+      });
+    }
+
+    function stopYoutube() {
+      ytWrapper.style.display = 'none';
+      if (ytPlayer && ytPlayer.stopVideo) { try { ytPlayer.stopVideo(); } catch (e) {} }
+    }
+
     function playCurrent() {
       clearTimeout(timerId);
       if (!playlist.length) return;
@@ -144,16 +198,30 @@
       applyOrientation(item.orientation);
       var adaptavel = item.fitMode === 'adaptavel';
       var seconds = item.duration > 0 ? item.duration : 8;
+      var youtubeId = item.kind === 'web' ? extractYoutubeVideoId(item.url) : null;
       if (item.kind === 'video') {
         img.style.display = 'none';
         img.src = '';
         stopFrame();
+        stopYoutube();
         video.classList.toggle('fit-adaptavel', adaptavel);
         applyRotation(video, item.rotation);
         video.onended = advance;
         video.src = item.url;
         video.style.display = 'block';
         video.play().catch(function () {});
+      } else if (youtubeId) {
+        video.pause();
+        video.onended = null;
+        video.style.display = 'none';
+        video.src = '';
+        img.style.display = 'none';
+        img.src = '';
+        stopFrame();
+        applyRotation(ytWrapper, item.rotation);
+        ytWrapper.style.display = 'block';
+        playYoutube(youtubeId);
+        // Sem cronometro: so avanca quando o YouTube avisar (onStateChange ENDED).
       } else if (item.kind === 'web') {
         video.pause();
         video.onended = null;
@@ -161,6 +229,7 @@
         video.src = '';
         img.style.display = 'none';
         img.src = '';
+        stopYoutube();
         applyRotation(frame, item.rotation);
         frame.src = item.url;
         frame.style.display = 'block';
@@ -171,6 +240,7 @@
         video.style.display = 'none';
         video.src = '';
         stopFrame();
+        stopYoutube();
         img.classList.toggle('fit-adaptavel', adaptavel);
         applyRotation(img, item.rotation);
         img.src = item.url;
@@ -196,6 +266,7 @@
       img.style.display = 'none';
       video.style.display = 'none';
       stopFrame();
+      stopYoutube();
       waiting.classList.add('hidden');
       emptyState.classList.remove('hidden');
       codeBadge.classList.add('visible');
@@ -222,6 +293,7 @@
       video.pause();
       video.onended = null;
       stopFrame();
+      stopYoutube();
       emptyState.classList.add('hidden');
       codeBadge.classList.remove('visible');
       waiting.classList.remove('hidden');

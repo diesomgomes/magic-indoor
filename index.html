@@ -1124,7 +1124,7 @@
 			}
 			row.querySelector('.title').textContent = item.title;
 
-			const isVideo = isMedia && item.mediaKind === 'video';
+			const isVideo = (isMedia && item.mediaKind === 'video') || toolSupportsRotation(item);
 			const durInput = row.querySelector('.dur');
 			durInput.value = item.duration;
 			durInput.addEventListener('input', () => { item.duration = Number.parseInt(durInput.value, 10) || 8; });

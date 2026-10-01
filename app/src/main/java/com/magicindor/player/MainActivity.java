@@ -10,9 +10,13 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.webkit.WebViewAssetLoader;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -58,8 +62,20 @@ public class MainActivity extends Activity {
 
         deviceCode = computeDeviceCode();
 
+        // Serve o player.html local pela origem virtual https://appassets.androidplatform.net/
+        // em vez de file://. O YouTube embutido recusa tocar (erro 153) quando a pagina que o
+        // contem foi carregada de file://, por nao ter uma origem http(s) valida.
+        WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         player = new WebView(this);
         player.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
@@ -72,7 +88,7 @@ public class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         setContentView(player);
-        player.loadUrl("file:///android_asset/player.html");
+        player.loadUrl("https://appassets.androidplatform.net/assets/player.html");
 
         startSync();
     }

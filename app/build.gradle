@@ -14,3 +14,9 @@ android {
         versionName "0.1.0"
     }
 }
+
+dependencies {
+    // WebViewAssetLoader: serve o player.html local numa origem https:// real em vez de
+    // file://, que o player do YouTube embutido rejeita (erro 153).
+    implementation "androidx.webkit:webkit:1.12.1"
+}

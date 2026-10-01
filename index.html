@@ -918,7 +918,7 @@
 		}
 
 		function itemFromTool(template) {
-			return { uid: ++uidSeq, type: 'tool', kind: template.kind, integration: template.integration, title: template.label, url: '', duration: 15, newsCount: 5 };
+			return { uid: ++uidSeq, type: 'tool', kind: template.kind, integration: template.integration, title: template.label, url: '', duration: 15, newsCount: 5, rotation: 0 };
 		}
 
 		function itemFromSaved(saved) {
@@ -926,7 +926,14 @@
 				return { uid: ++uidSeq, type: 'media', mediaId: saved.media_id, mediaKind: saved.media_kind, title: saved.media_name || 'Arquivo', fileName: saved.file_name, duration: saved.duration_seconds, fit: saved.fit_mode, rotation: saved.rotation || 0 };
 			}
 			const template = toolTemplateFor(saved.media_kind, saved.integration);
-			return { uid: ++uidSeq, type: 'tool', kind: saved.media_kind, integration: saved.integration, title: template ? template.label : (saved.integration || mediaLabel(saved.media_kind)), url: saved.source_url || '', duration: saved.duration_seconds, newsCount: saved.news_count || 5 };
+			return { uid: ++uidSeq, type: 'tool', kind: saved.media_kind, integration: saved.integration, title: template ? template.label : (saved.integration || mediaLabel(saved.media_kind)), url: saved.source_url || '', duration: saved.duration_seconds, newsCount: saved.news_count || 5, rotation: saved.rotation || 0 };
+		}
+
+		// So o YouTube (entre as ferramentas) tem a opcao de giro — rodar um dashboard ou
+		// pagina de notícias de lado nao faz sentido, mas um video pode vir gravado na
+		// vertical ou precisar virar pra caber numa TV montada de lado.
+		function toolSupportsRotation(item) {
+			return item.kind === 'web' && item.integration === 'YouTube';
 		}
 
 		const ORIENTATION_HINTS = {
@@ -1139,7 +1146,7 @@
 
 			const rotate = row.querySelector('.rotate');
 			rotate.value = String(item.rotation || 0);
-			rotate.hidden = !isMedia || fit.value !== 'adaptavel';
+			rotate.hidden = isMedia ? fit.value !== 'adaptavel' : !toolSupportsRotation(item);
 			rotate.addEventListener('change', () => { item.rotation = Number.parseInt(rotate.value, 10) || 0; });
 
 			fit.addEventListener('change', () => {
@@ -1212,7 +1219,7 @@
 				orientation: editor.orientation,
 				items: editor.items.map(item => item.type === 'media'
 					? { type: 'media', media_id: item.mediaId, duration: item.duration, fit_mode: item.fit, rotation: item.rotation || 0 }
-					: { type: 'tool', kind: item.kind, url: item.url.trim(), integration: item.integration, duration: item.duration, news_count: item.newsCount }),
+					: { type: 'tool', kind: item.kind, url: item.url.trim(), integration: item.integration, duration: item.duration, news_count: item.newsCount, rotation: item.rotation || 0 }),
 			};
 			const saveBtn = document.getElementById('editorSave');
 			const idleLabel = saveBtn.textContent;

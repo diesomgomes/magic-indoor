@@ -161,6 +161,7 @@
         video.src = '';
         img.style.display = 'none';
         img.src = '';
+        applyRotation(frame, item.rotation);
         frame.src = item.url;
         frame.style.display = 'block';
         timerId = setTimeout(advance, seconds * 1000);

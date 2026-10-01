@@ -128,6 +128,10 @@ async function parseBody(supabase, body) {
         url = raw.kind === 'web' ? toEmbeddableUrl(rawUrl) : rawUrl;
       }
       const integration = typeof raw.integration === 'string' ? raw.integration.trim().slice(0, 60) || null : null;
+      // Giro em itens de ferramenta so faz sentido pro YouTube (um video pode vir
+      // gravado na vertical, ou a TV estar montada de lado) — dashboards/noticias
+      // ja se adaptam ao proprio layout, entao ignoramos rotation pra eles.
+      const toolRotation = raw.kind === 'web' && integration === 'YouTube' ? parseRotation(raw.rotation) : 0;
       parsed.push({
         media_id: null,
         file_name: '',
@@ -136,7 +140,7 @@ async function parseBody(supabase, body) {
         media_kind: raw.kind,
         duration_seconds: duration,
         fit_mode: fitMode,
-        rotation,
+        rotation: toolRotation,
         source_url: url,
         integration,
         news_count: raw.kind === 'noticias' ? parseNewsCount(raw.news_count) : null,

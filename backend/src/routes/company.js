@@ -6,7 +6,10 @@ const router = express.Router();
 router.get('/', requireAuth, async (req, res) => {
   const { data, error } = await req.supabase.from('company_settings').select('*').eq('owner_id', req.ownerId).maybeSingle();
   if (error) { console.error(error); return res.status(500).json({ error: error.message }); }
-  res.json(data || { razao_social: '', cnpj: '', endereco: '' });
+  const result = data || { razao_social: '', cnpj: '', endereco: '', approved: false, max_devices: null };
+  // A conta master nunca fica presa atras do proprio portao de aprovacao.
+  if (req.ownerId === process.env.MASTER_USER_ID) result.approved = true;
+  res.json(result);
 });
 
 router.put('/', requireAuth, async (req, res) => {

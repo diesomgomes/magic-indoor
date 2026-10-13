@@ -17,4 +17,14 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth };
+// Pra usar DEPOIS de requireAuth (precisa de req.ownerId ja preenchido). So deixa passar
+// quem e o usuario designado como master via MASTER_USER_ID no .env — nenhum outro
+// usuario, mesmo autenticado, tem acesso as rotas de /api/master.
+function requireMaster(req, res, next) {
+  if (!process.env.MASTER_USER_ID || req.ownerId !== process.env.MASTER_USER_ID) {
+    return res.status(403).json({ error: 'Acesso restrito.' });
+  }
+  next();
+}
+
+module.exports = { requireAuth, requireMaster };

@@ -249,6 +249,14 @@
 	</style>
 </head>
 <body>
+	<div id="pendingApproval" hidden style="position:fixed;inset:0;z-index:50;background:var(--dark);color:var(--paper);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:'Manrope',sans-serif">
+		<div style="max-width:420px">
+			<div style="width:52px;height:52px;border-radius:50%;background:rgba(79,143,240,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px">⏳</div>
+			<h1 style="font-size:22px;margin:0 0 10px">Sua conta está em análise</h1>
+			<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 24px">Assim que ela for aprovada, você já consegue acessar o painel normalmente. Fale com quem te apresentou o Magic Indoor se demorar mais do que o esperado.</p>
+			<button class="secondary" onclick="authClient.auth.signOut().then(() => location.href = '/login')">Sair</button>
+		</div>
+	</div>
 	<div class="app">
 		<aside class="sidebar">
 			<div class="brand"><div class="brand-mark"><img src="assets/logo.png" alt="Magic Indoor" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'brand-mark-fallback',textContent:'MI'}))"></div><span>Magic Indoor</span></div>
@@ -1591,13 +1599,26 @@
 				await authClient.auth.signOut();
 				window.location.href = '/login';
 			});
+
+			// Conta nova: fica bloqueada ate o master aprovar (e so ve o dashboard depois).
+			try {
+				const response = await apiFetch(`${API_BASE}/api/company`);
+				if (response.ok) {
+					const company = await response.json();
+					if (!company.approved) {
+						document.getElementById('pendingApproval').hidden = false;
+						return 'pending';
+					}
+				}
+			} catch { /* se a checagem falhar, segue — nao trava o painel por erro de rede */ }
+
 			document.documentElement.classList.add('auth-ok');
 			return true;
 		}
 
 		(async () => {
-			const authenticated = await checkAuthGate();
-			if (!authenticated) return;
+			const result = await checkAuthGate();
+			if (result !== true) return;
 			refreshAll();
 			startPolling();
 			loadCompanySettings();

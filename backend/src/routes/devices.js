@@ -29,6 +29,19 @@ router.post('/link', requireAuth, async (req, res) => {
 
   const { data: existing } = await req.supabase.from('devices').select('*').eq('code', trimmedCode).maybeSingle();
 
+  if (req.ownerId !== process.env.MASTER_USER_ID) {
+    const { data: settings } = await supabaseAdmin.from('company_settings').select('approved, max_devices').eq('owner_id', req.ownerId).maybeSingle();
+    if (!settings || !settings.approved) {
+      return res.status(403).json({ error: 'Sua conta ainda não foi aprovada. Fale com o suporte do Magic Indoor.' });
+    }
+    if (!existing && settings.max_devices != null) {
+      const { count } = await req.supabase.from('devices').select('id', { count: 'exact', head: true });
+      if ((count || 0) >= settings.max_devices) {
+        return res.status(403).json({ error: `Limite de ${settings.max_devices} dispositivo(s) atingido para esta conta.` });
+      }
+    }
+  }
+
   if (existing) {
     const { data, error } = await req.supabase
       .from('devices')

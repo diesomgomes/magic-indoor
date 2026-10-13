@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Acesso Master | Magic Indoor</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+		:root {
+			--ink: #101a2c; --muted: #64758c; --line: #d9e3f5; --paper: #f1f5fc; --white: #ffffff;
+			--accent: #2f6fed; --accent-deep: #1d4ed8; --dark: #0d1b2a;
+		}
+		* { box-sizing: border-box; }
+		body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Manrope', sans-serif; }
+		button, input { font: inherit; }
+		button { cursor: pointer; }
+
+		.login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+		.login-card { width: 100%; max-width: 340px; background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 32px; }
+		.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.04em; font-size: 16px; margin-bottom: 24px; }
+		.brand-mark { width: 28px; height: 28px; background: var(--dark); color: #fff; border-radius: 6px; display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+		h1 { font-size: 20px; margin: 0 0 6px; }
+		.subtitle { color: var(--muted); font-size: 12px; margin: 0 0 22px; }
+		.field { display: grid; gap: 6px; margin-bottom: 14px; }
+		.field label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+		.field input { width: 100%; border: 1px solid var(--line); padding: 11px 12px; outline: none; font-size: 13px; }
+		.field input:focus { border-color: var(--accent); }
+		.primary { width: 100%; background: var(--dark); color: #fff; border: 0; border-radius: 6px; padding: 12px; font-weight: 800; font-size: 13px; margin-top: 6px; }
+		.primary:hover { background: #16263a; }
+		.primary:disabled { opacity: .6; }
+		.form-error { display: none; background: #fdecea; border: 1px solid #f1c2c2; color: #b3392f; font-size: 12px; padding: 10px 12px; border-radius: 5px; margin-bottom: 14px; }
+		.form-error.visible { display: block; }
+
+		.dash { display: none; max-width: 1080px; margin: 0 auto; padding: 32px 24px; }
+		.dash.visible { display: block; }
+		.dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+		.dash-header h1 { font-size: 20px; margin: 0; }
+		.dash-header .brand { margin: 0; }
+		.logout-btn { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; font-size: 12px; font-weight: 700; color: var(--muted); }
+		.logout-btn:hover { border-color: var(--accent); color: var(--accent-deep); }
+
+		table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 13px; }
+		th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--line); }
+		th { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 800; background: #f8fafd; }
+		tr:last-child td { border-bottom: none; }
+		.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+		.badge.approved { background: #eaf6ee; color: #256a3e; }
+		.badge.pending { background: #fdf3e2; color: #a2620b; }
+		.devices-input { width: 64px; border: 1px solid var(--line); padding: 6px 8px; font-size: 12px; }
+		.row-actions { display: flex; gap: 6px; align-items: center; }
+		.btn-sm { border: 0; border-radius: 5px; padding: 7px 11px; font-size: 11px; font-weight: 800; }
+		.btn-approve { background: #256a3e; color: #fff; }
+		.btn-reject { background: #fdecea; color: #b3392f; }
+		.btn-save { background: var(--accent); color: #fff; }
+		.btn-sm:hover { opacity: .88; }
+		.loading-msg, .empty-msg { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+	</style>
+</head>
+<body>
+	<div class="login-screen" id="loginScreen">
+		<div class="login-card">
+			<div class="brand"><div class="brand-mark">MI</div><span>Acesso Master</span></div>
+			<h1>Entrar</h1>
+			<p class="subtitle">Area restrita de administracao do Magic Indoor.</p>
+			<div class="form-error" id="formError"></div>
+			<form id="loginForm">
+				<div class="field">
+					<label for="email">E-mail</label>
+					<input id="email" type="email" required autocomplete="email">
+				</div>
+				<div class="field">
+					<label for="password">Senha</label>
+					<input id="password" type="password" required autocomplete="current-password">
+				</div>
+				<button type="submit" class="primary" id="submitBtn">Entrar</button>
+			</form>
+		</div>
+	</div>
+
+	<div class="dash" id="dash">
+		<div class="dash-header">
+			<div class="brand"><div class="brand-mark">MI</div><span>Acesso Master</span></div>
+			<button class="logout-btn" id="logoutBtn">Sair</button>
+		</div>
+		<div id="tableWrap"><div class="loading-msg">Carregando contas...</div></div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+	<script>
+	async function initMaster() {
+		let SUPABASE_URL = '', SUPABASE_ANON_KEY = '';
+		try {
+			const response = await fetch('/api/config');
+			if (response.ok) {
+				const config = await response.json();
+				SUPABASE_URL = config.supabaseUrl;
+				SUPABASE_ANON_KEY = config.supabaseAnonKey;
+			}
+		} catch { /* backend fora do ar */ }
+
+		const configured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+		const authClient = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+		const loginScreen = document.getElementById('loginScreen');
+		const dash = document.getElementById('dash');
+		const formError = document.getElementById('formError');
+		const submitBtn = document.getElementById('submitBtn');
+
+		function showError(msg) { formError.textContent = msg; formError.classList.add('visible'); }
+
+		async function apiFetch(path, options = {}) {
+			const { data } = await authClient.auth.getSession();
+			const token = data.session ? data.session.access_token : null;
+			return fetch(path, {
+				...options,
+				headers: { ...(options.headers || {}), Authorization: token ? `Bearer ${token}` : '', 'Content-Type': 'application/json' },
+			});
+		}
+
+		async function loadAccounts() {
+			const tableWrap = document.getElementById('tableWrap');
+			const response = await apiFetch('/api/master/accounts');
+			if (!response.ok) {
+				if (response.status === 403) {
+					await authClient.auth.signOut();
+					showLogin('Essa conta nao tem acesso ao painel master.');
+					return;
+				}
+				tableWrap.innerHTML = '<div class="empty-msg">Nao foi possivel carregar as contas.</div>';
+				return;
+			}
+			const accounts = await response.json();
+			if (!accounts.length) {
+				tableWrap.innerHTML = '<div class="empty-msg">Nenhuma conta cadastrada ainda.</div>';
+				return;
+			}
+			const table = document.createElement('table');
+			table.innerHTML = `
+				<thead><tr>
+					<th>Conta</th><th>Empresa</th><th>Criada em</th><th>Status</th><th>Dispositivos</th><th>Limite</th><th></th>
+				</tr></thead>
+				<tbody></tbody>`;
+			const tbody = table.querySelector('tbody');
+			for (const acc of accounts) {
+				const tr = document.createElement('tr');
+				const createdAt = new Date(acc.created_at).toLocaleDateString('pt-BR');
+				tr.innerHTML = `
+					<td><strong>${acc.full_name || '(sem nome)'}</strong><br><span style="color:var(--muted);font-size:11px">${acc.email}</span></td>
+					<td>${acc.razao_social || '-'}</td>
+					<td>${createdAt}</td>
+					<td><span class="badge ${acc.approved ? 'approved' : 'pending'}">${acc.approved ? 'Aprovada' : 'Pendente'}</span></td>
+					<td>${acc.device_count}</td>
+					<td><input type="number" min="0" class="devices-input" placeholder="sem limite" value="${acc.max_devices != null ? acc.max_devices : ''}"></td>
+					<td class="row-actions"></td>`;
+				const actionsCell = tr.querySelector('.row-actions');
+				const maxDevicesInput = tr.querySelector('.devices-input');
+
+				const toggleBtn = document.createElement('button');
+				toggleBtn.className = `btn-sm ${acc.approved ? 'btn-reject' : 'btn-approve'}`;
+				toggleBtn.textContent = acc.approved ? 'Revogar' : 'Aprovar';
+				toggleBtn.addEventListener('click', async () => {
+					toggleBtn.disabled = true;
+					const res = await apiFetch(`/api/master/accounts/${acc.id}`, { method: 'PATCH', body: JSON.stringify({ approved: !acc.approved }) });
+					if (res.ok) loadAccounts();
+					else toggleBtn.disabled = false;
+				});
+
+				const saveBtn = document.createElement('button');
+				saveBtn.className = 'btn-sm btn-save';
+				saveBtn.textContent = 'Salvar limite';
+				saveBtn.addEventListener('click', async () => {
+					saveBtn.disabled = true;
+					const raw = maxDevicesInput.value.trim();
+					const res = await apiFetch(`/api/master/accounts/${acc.id}`, { method: 'PATCH', body: JSON.stringify({ max_devices: raw === '' ? null : Number(raw) }) });
+					saveBtn.disabled = false;
+					if (res.ok) { saveBtn.textContent = 'Salvo!'; setTimeout(() => { saveBtn.textContent = 'Salvar limite'; }, 1500); }
+				});
+
+				actionsCell.append(toggleBtn, saveBtn);
+				tbody.append(tr);
+			}
+			tableWrap.innerHTML = '';
+			tableWrap.append(table);
+		}
+
+		function showLogin(errorMsg) {
+			dash.classList.remove('visible');
+			loginScreen.style.display = 'flex';
+			formError.classList.remove('visible');
+			if (errorMsg) showError(errorMsg);
+		}
+
+		async function showDash() {
+			loginScreen.style.display = 'none';
+			dash.classList.add('visible');
+			loadAccounts();
+		}
+
+		document.getElementById('logoutBtn').addEventListener('click', async () => {
+			await authClient.auth.signOut();
+			showLogin();
+		});
+
+		document.getElementById('loginForm').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			if (!configured) { showError('Nao foi possivel conectar ao servidor.'); return; }
+			formError.classList.remove('visible');
+			submitBtn.disabled = true;
+			try {
+				const email = document.getElementById('email').value.trim();
+				const password = document.getElementById('password').value;
+				const { error } = await authClient.auth.signInWithPassword({ email, password });
+				if (error) throw error;
+				const response = await apiFetch('/api/master/accounts');
+				if (response.status === 403) {
+					await authClient.auth.signOut();
+					throw new Error('Essa conta nao tem acesso ao painel master.');
+				}
+				showDash();
+			} catch (err) {
+				showError(err.message || 'Nao foi possivel entrar.');
+			} finally {
+				submitBtn.disabled = false;
+			}
+		});
+
+		if (configured) {
+			const { data } = await authClient.auth.getSession();
+			if (data.session) {
+				const response = await apiFetch('/api/master/accounts');
+				if (response.status === 403) { await authClient.auth.signOut(); showLogin(); }
+				else showDash();
+			}
+		}
+	}
+	initMaster();
+	</script>
+</body>
+</html>

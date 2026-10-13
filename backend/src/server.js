@@ -12,6 +12,7 @@ const newsRouter = require('./routes/news');
 const musicRouter = require('./routes/music');
 const mediaRouter = require('./routes/media');
 const companyRouter = require('./routes/company');
+const masterRouter = require('./routes/master');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +26,7 @@ app.use('/assets', express.static(path.join(__dirname, '..', '..', 'assets')));
 
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, '..', '..', 'index.html')));
 app.get('/login', (_req, res) => res.sendFile(path.join(__dirname, '..', '..', 'login.html')));
+app.get('/acessomaster', (_req, res) => res.sendFile(path.join(__dirname, '..', '..', 'acessomaster.html')));
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 // Config publica e segura de expor ao navegador: URL do projeto e a chave anon
@@ -42,6 +44,7 @@ app.use('/api/news', newsRouter);
 app.use('/api/music', musicRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/company', companyRouter);
+app.use('/api/master', masterRouter);
 
 // APK mais recente, disponibilizado para download em um clique na tela de Dispositivos.
 app.get('/downloads/magic-indoor-player.apk', (_req, res) => {

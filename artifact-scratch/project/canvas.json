@@ -1,0 +1,14 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-09-29T12:00:00Z" },
+  "title": "Encarte Magic Indoor",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1080, "h": 1560 },
+    "Academia.dc.html": { "x": 1160, "y": 0, "w": 1080, "h": 1560 }
+  },
+  "order": ["Main.dc.html", "Academia.dc.html"],
+  "notes": {},
+  "designSystems": []
+}

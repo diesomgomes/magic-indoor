@@ -17,6 +17,10 @@ create table if not exists public.company_settings (
   razao_social text,
   cnpj text,
   endereco text,
+  -- Aprovacao de conta e limite de dispositivos: so o painel master (service role)
+  -- pode alterar essas duas colunas — a rota normal de /api/company nunca as envia.
+  approved boolean not null default false,
+  max_devices integer,
   updated_at timestamptz not null default now()
 );
 
@@ -114,6 +118,14 @@ begin
     );
   end loop;
 end $$;
+
+-- Protecao extra pra company_settings: RLS por linha nao impede o DONO de editar
+-- QUALQUER coluna da propria linha (inclusive approved/max_devices), e isso valeria
+-- mesmo batendo direto na API do Supabase, sem passar pelo nosso backend. Restringe
+-- em nivel de COLUNA: autenticado comum so grava os campos de cadastro da empresa;
+-- approved/max_devices so o service_role (usado pelas rotas /api/master) pode alterar.
+revoke update on public.company_settings from authenticated;
+grant update (razao_social, cnpj, endereco, updated_at) on public.company_settings to authenticated;
 
 -- Bucket de storage para os arquivos de midia (imagens/videos/GIFs), publico para leitura
 -- (o player Android busca via URL simples) mas so a propria conta pode enviar/apagar.

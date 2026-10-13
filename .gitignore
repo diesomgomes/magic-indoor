@@ -21,3 +21,4 @@ Thumbs.db
 desktop-player/node_modules/
 desktop-player/dist/
 desktop-player/dist-installer/
+.claude/

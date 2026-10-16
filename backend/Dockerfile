@@ -9,7 +9,7 @@ RUN cd backend && npm install --omit=dev
 # Copia o resto do projeto, mantendo a mesma estrutura relativa que server.js espera
 # (index.html/login.html/assets na raiz, backend/src um nivel abaixo)
 COPY backend/src ./backend/src
-COPY index.html login.html ./
+COPY index.html login.html acessomaster.html ./
 COPY assets ./assets
 
 EXPOSE 3000

@@ -532,6 +532,7 @@
 			if (kind === 'gif') return 'GIF';
 			if (kind === 'web') return 'Dashboard / web';
 			if (kind === 'noticias') return 'Notícias';
+			if (kind === 'agenda') return 'Agenda';
 			return 'Imagem';
 		}
 
@@ -540,16 +541,17 @@
 			if (kind === 'gif') return { cls: 'coral', icon: '↻' };
 			if (kind === 'web') return { cls: 'yellow', icon: '▦' };
 			if (kind === 'noticias') return { cls: 'yellow', icon: '≡' };
+			if (kind === 'agenda') return { cls: 'blue', icon: '▤' };
 			return { cls: 'green', icon: '✦' };
 		}
 
-		function isUrlItem(item) { return item.media_kind === 'web' || item.media_kind === 'noticias'; }
+		function isUrlItem(item) { return item.media_kind === 'web' || item.media_kind === 'noticias' || item.media_kind === 'agenda'; }
 
 		function describeItem(item) {
 			if (!isUrlItem(item)) return `${item.media_name || 'Arquivo'} · ${mediaLabel(item.media_kind)}`;
 			let host = item.source_url || '';
 			try { host = new URL(item.source_url).host; } catch { /* mantem a URL crua */ }
-			const count = item.media_kind === 'noticias' && item.news_count ? ` · ${item.news_count} por vez` : '';
+			const count = (item.media_kind === 'noticias' || item.media_kind === 'agenda') && item.news_count ? ` · ${item.news_count} por vez` : '';
 			return `${item.integration || mediaLabel(item.media_kind)} · ${host}${count}`;
 		}
 
@@ -894,6 +896,7 @@
 				{ kind: 'musica', integration: 'Last.fm', label: 'Trilha sonora (tocando agora)', icon: '♪', color: '#c8433c', placeholder: 'seu-usuario-lastfm', hint: 'Mostra capa, música e artista tocando agora no Spotify, YouTube Music etc. Conexão pessoal — depois de adicionar, clique em "Como conectar?".' },
 			],
 			ferramentas: [
+				{ kind: 'agenda', integration: 'Agenda Expert', label: 'Agenda Expert (próximos atendimentos)', icon: '▤', color: '#1a8cff', placeholder: 'https://agenda.seudominio.com.br/empresa/api/publico/tv/proximos?token=...', hint: 'Cole o endereço gerado em Agenda Expert › Configurações › Agendamento online › TV. Mostra os próximos agendamentos; o campo "por vez" define quantos aparecem.' },
 				{ kind: 'web', integration: 'Dashboard BI', label: 'Dashboard BI (Looker Studio)', icon: '▦', color: '#c99a2e', placeholder: 'https://lookerstudio.google.com/embed/reporting/...', hint: 'Use o link de incorporação do relatório.' },
 				{ kind: 'web', integration: 'Zabbix', label: 'Zabbix', icon: '▤', color: '#c4483f', placeholder: 'http://servidor/zabbix/zabbix.php?action=dashboard.view&kiosk=1', hint: 'Dashboard do Zabbix (kiosk=1 esconde os menus).' },
 				{ kind: 'web', integration: 'Uptime Kuma', label: 'Uptime Kuma', icon: '◉', color: '#3aa76d', placeholder: 'http://servidor:3001/status/nome', hint: 'URL pública da Status Page.' },
@@ -1110,7 +1113,7 @@
 				<span class="item-sub order-num">${position + 1}</span>
 				<span class="visual"></span>
 				<div class="title"></div>
-				<span class="news-wrap" hidden><input type="number" class="sub-input news-count" min="1" max="10" title="Quantas notícias aparecem por vez (1 a 10)"> <span class="item-sub">notícias</span></span>
+				<span class="news-wrap" hidden><input type="number" class="sub-input news-count" min="1" max="10" title="Quantos itens aparecem por vez (1 a 10)"> <span class="item-sub">itens</span></span>
 				<span class="dur-wrap"><input type="number" class="sub-input dur" min="2" max="300" title="Tempo na tela (segundos)"> <span class="item-sub">s</span></span>
 				<span class="item-sub until-end" hidden>até o fim</span>
 				<label class="item-sub sound-toggle" hidden style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" class="sound"> com som</label>
@@ -1138,8 +1141,8 @@
 			durInput.value = item.duration;
 			durInput.addEventListener('input', () => { item.duration = Number.parseInt(durInput.value, 10) || 8; });
 			const newsWrap = row.querySelector('.news-wrap');
-			newsWrap.hidden = item.kind !== 'noticias';
-			if (item.kind === 'noticias') {
+			newsWrap.hidden = item.kind !== 'noticias' && item.kind !== 'agenda';
+			if (item.kind === 'noticias' || item.kind === 'agenda') {
 				const countInput = row.querySelector('.news-count');
 				countInput.value = item.newsCount;
 				countInput.addEventListener('input', () => {

@@ -4,7 +4,7 @@ const { logEvent } = require('../events');
 
 const router = express.Router();
 
-const URL_KINDS = ['web', 'noticias', 'musica'];
+const URL_KINDS = ['web', 'noticias', 'musica', 'agenda'];
 const FIT_MODES = ['original', 'adaptavel'];
 const ORIENTATIONS = ['horizontal', 'vertical'];
 const DEFAULT_DURATION = 8;
@@ -154,7 +154,7 @@ async function parseBody(supabase, body) {
         muted: isYoutube ? parseMuted(raw.muted) : true,
         source_url: url,
         integration,
-        news_count: raw.kind === 'noticias' ? parseNewsCount(raw.news_count) : null,
+        news_count: raw.kind === 'noticias' || raw.kind === 'agenda' ? parseNewsCount(raw.news_count) : null,
       });
     } else {
       return { error: 'Item invalido na programacao.' };

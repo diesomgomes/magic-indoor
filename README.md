@@ -246,3 +246,8 @@ Depois desse fluxo, entram grupos de dispositivos, relatórios avançados e publ
 - O painel e o backend não têm autenticação: qualquer pessoa na rede local pode acessar.
 - O APK reproduz a mídia direto pela URL do backend; ainda não baixa e armazena o arquivo localmente (sem cache offline).
 - O teste do APK em aparelho físico depende de ajustar `API_BASE` para o IP local do backend (ver seção acima) e de um dispositivo conectado via ADB ou da instalação manual do arquivo APK.
+
+
+## Agenda Expert na TV
+
+Ferramenta **Agenda Expert (próximos atendimentos)** (Ferramentas, no editor de programação): cole o endereço gerado no Agenda Expert (Configurações › Agendamento online › TV). O backend busca a lista em `GET /api/agenda/view?url=...&count=N` e entrega uma página em tela cheia, atualizada a cada 60 s; "itens" define quantos agendamentos aparecem por vez (1 a 10). Só aceita endereços que terminam em `/api/publico/tv/proximos`.

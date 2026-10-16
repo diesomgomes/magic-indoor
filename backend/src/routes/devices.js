@@ -153,6 +153,9 @@ router.get('/:code/campaigns', async (req, res) => {
     if (item.media_kind === 'noticias') {
       item.source_url = `${baseUrl}/api/news/view?url=${encodeURIComponent(item.source_url)}&count=${item.news_count || 5}`;
       item.media_kind = 'web';
+    } else if (item.media_kind === 'agenda') {
+      item.source_url = `${baseUrl}/api/agenda/view?url=${encodeURIComponent(item.source_url)}&count=${item.news_count || 5}`;
+      item.media_kind = 'web';
     } else if (item.media_kind === 'musica') {
       item.source_url = `${baseUrl}/api/music/view?user=${encodeURIComponent(item.source_url)}`;
       item.media_kind = 'web';
